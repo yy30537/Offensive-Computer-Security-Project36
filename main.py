@@ -4,27 +4,37 @@ import dns_spoof
 #import ssl_strip
 import sys
 
-# accepts a command-line argument to determine whether to run 
-# ARP poisoning, DNS spoofing, or SSL stripping. 
-# imports and uses the modules and functions based on command-line argument.
 def main():
-
-    # get default network interface
     interface = config.get_network_config()
 
-    # print configs
+
     print("Interface: {}".format(interface))
-    print("Target IP (M1): 192.168.56.101")
-    print("Gateway IP (M2): 192.168.56.102")
-    print("Attacker IP (M3): 192.168.56.103")
 
     
+    macVictim = '08:00:27:B7:C4:AF'
+    ipVictim = '192.168.56.101'
+    macServer = '08:00:27:CC:08:6F'
+    ipServer = '192.168.56.102'
+    macAttacker = '08:00:27:D0:25:4C'
+    ipAttacker = '192.168.56.103'
+
+
+    print("Target IP (M1): {}".format(ipVictim))
+    print("Target MAC (M1): {}\n".format(macVictim))
+
+    print("Gateway(Server) IP (M2): {}".format(ipServer))
+    print("Gateway(Server) MAC (M2): {}\n".format(macServer))
+
+    print("Attacker IP (M3): {}".format(ipAttacker))    
+    print("Attacker MAC (M3): {}\n".format(macAttacker))
+    
+
     if len(sys.argv) != 2:
         print("Usage: python main.py [arp|dns|ssl]")
         sys.exit(1)
 
     if sys.argv[1] == "arp":
-        arp_poison.arp_poison("192.168.56.101", "192.168.56.102", interface)
+        arp_poison.arp_poison(ipVictim, macVictim, ipServer, macServer, ipAttacker, macAttacker, interface)
     elif sys.argv[1] == "dns":
         dns_spoof.start_spoof(interface)
     #elif sys.argv[1] == "ssl":

