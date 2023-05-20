@@ -39,6 +39,8 @@ def main():
         dns_spoof.start_spoof(interface)
     #elif sys.argv[1] == "ssl":
         #ssl_strip.start_strip(interface)
+    elif sys.argv[1] == "mitm":
+        arp_poison.listen_arp(ipAttacker, macAttacker)
     else:
         print("Unknown command: {}. Use either 'arp', 'dns', or 'ssl'".format(sys.argv[1]))
         sys.exit(1)
