@@ -15,7 +15,7 @@ def main():
     ipVictim = '192.168.56.101'
     macServer = '08:00:27:CC:08:6F'
     ipServer = '192.168.56.102'
-    macAttacker = '08:00:27:D0:25:4C'
+    macAttacker = '08:00:27:D0:25:4B'
     ipAttacker = '192.168.56.103'
 
 
@@ -34,9 +34,12 @@ def main():
         sys.exit(1)
 
     if sys.argv[1] == "arp":
-        arp_poison.arp_poison(ipVictim, macVictim, ipServer, macServer, ipAttacker, macAttacker, interface)
+        print("ARP Poisoning...")
+        arp_poison.arp_poison(ipVictim, macVictim, ipServer, macAttacker, interface)
     elif sys.argv[1] == "dns":
         dns_spoof.start_spoof(interface)
+    elif sys.argv[1] == "arp_patient":
+        arp_poison.arp_listener(macAttacker, interface)
     #elif sys.argv[1] == "ssl":
         #ssl_strip.start_strip(interface)
     else:
