@@ -34,7 +34,9 @@ def main():
         sys.exit(1)
 
     if sys.argv[1] == "arp":
-        arp_poison.arp_poison(ipVictim, macVictim, ipServer, macServer, ipAttacker, macAttacker, interface)
+        arp_poison.arp_poison(ipVictim, macVictim,\
+                                ipServer, macServer, \
+                                ipAttacker, macAttacker)
     elif sys.argv[1] == "dns":
         dns_spoof.start_spoof(interface)
     #elif sys.argv[1] == "ssl":
