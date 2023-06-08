@@ -4,7 +4,7 @@ from scapy.all import ARP, Ether, srp
 import scapy.all as scapy
 import netifaces as ni
 
-interface = 'enp0s8'
+interface = 'enp0s3'
 def list_interfaces():
     interfaces = ni.interfaces()
     return interfaces
@@ -34,7 +34,8 @@ def scan_network(interface, interval=[1,24]):
         target_ip = ip[0] + '.' + ip[1] + '.' + ip[2] + '.' + str(i)
         arp = ARP(pdst=target_ip)
         packet = broadcast/arp
-        result = srp(packet, timeout=3, verbose=0)[0]
+        print("searching" + target_ip)
+        result = srp(packet, timeout=1, verbose=0, iface=interface)[0]
         for sent, received in result:
             if (received.haslayer(ARP)):
                 device = {'ip': received[ARP].psrc, 'mac': received[ARP].hwsrc}
