@@ -25,22 +25,23 @@ def get_gateway():
     result = {'ipGateway': gateway_ip, 'macGateway': gateway_mac}
     return result
 
-def scan_network(interface, interval=[1,24]):
+def scan_network(interface, interval=[1,10]):
     ip = get_own_ip_mac_adress(interface)['ipAttacker']
     ip = ip.split('.')
     broadcast = Ether(dst='ff:ff:ff:ff:ff:ff')
     devices_list = []
     for i in range(interval[0], interval[1]):
-        target_ip = ip[0] + '.' + ip[1] + '.' + ip[2] + '.' + str(i)
+        if interface == 'enp0s3':
+            target_ip = ip[0] + '.' + ip[1] + '.' + ip[2] + '.' + '10' + str(i)
+        elif interface == 'enp0s8':
+            target_ip = ip[0] + '.' + ip[1] + '.' + ip[2] + '.' + str(i)
+        else:
+            print('Not Implemented Yet... :(')
         arp = ARP(pdst=target_ip)
         packet = broadcast/arp
-        print("searching" + target_ip)
         result = srp(packet, timeout=1, verbose=0, iface=interface)[0]
         for sent, received in result:
             if (received.haslayer(ARP)):
                 device = {'ip': received[ARP].psrc, 'mac': received[ARP].hwsrc}
                 devices_list.append(device)
-                print(device)
     return devices_list
-
-print(get_gateway())
