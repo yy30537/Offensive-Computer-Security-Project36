@@ -16,8 +16,14 @@ def get_own_ip_mac_adress(interface):
     return result
 
 def get_gateway():
-    gateway = ni.gateways()['default'][ni.AF_INET][0]
-    return gateway
+    gateway_ip = ni.gateways()['default'][ni.AF_INET][0]
+    ARP_request = ARP(pdst=gateway_ip)
+    broadcast = Ether(dst='ff:ff:ff:ff:ff:ff')
+    packet = broadcast/ARP_request
+    result = srp(packet, timeout=3, verbose=0)[0]
+    gateway_mac = result[0][1].hwsrc
+    result = {'ipGateway': gateway_ip, 'macGateway': gateway_mac}
+    return result
 
 def scan_network(interface, interval=[1,24]):
     ip = get_own_ip_mac_adress(interface)['ipAttacker']
@@ -35,3 +41,5 @@ def scan_network(interface, interval=[1,24]):
                 devices_list.append(device)
                 print(device)
     return devices_list
+
+print(get_gateway())
