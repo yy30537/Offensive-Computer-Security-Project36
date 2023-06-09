@@ -29,7 +29,7 @@ def set_load(packet, load):
     del packet[TCP].chksum
     return packet
 
-def ssl_strip(interface):
+def ssl_strip():
     queue = netfilterqueue.NetfilterQueue()
     try:
         queue.bind(0, process_packet)

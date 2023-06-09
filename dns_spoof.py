@@ -1,5 +1,7 @@
+import netfilterqueue
 from scapy.all import *
-from netfilterqueue import NetfilterQueue
+import os
+#from netfilterqueue import NetfilterQueue
 
 def modify(packet):
 
@@ -50,7 +52,8 @@ def modify(packet):
 def dns_spoof():
     
     os.system("sudo iptables -I FORWARD -j NFQUEUE --queue-num  1")
-    queue = NetfilterQueue()
+    #queue = NetfilterQueue()
+    queue = netfilterqueue.NetfilterQueue()
     queue.bind(1, modify)
     queue.run()
 

