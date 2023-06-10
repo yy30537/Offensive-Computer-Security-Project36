@@ -298,7 +298,7 @@ def main():
     changeMenu.add_command(label="Change Gateway Details (NAT)", command=changeGateNAT)
     changeMenu.add_command(label="Change Attacker Details (NAT)", command=changeAttNAT)
     changeMenu.add_command(label="View Device List", command=showList)
-    menu.add_cascade(label="Change IP", menu=changeMenu)
+    menu.add_cascade(label="Change Details", menu=changeMenu)
 
 
         
