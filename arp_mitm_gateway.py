@@ -25,7 +25,5 @@ def gateway_spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macV
 
     
 
-def spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface):
-    while True:
-        gateway_spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface)
-        time.sleep(60)
+def spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface, ):
+    gateway_spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface)
