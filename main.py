@@ -65,7 +65,8 @@ def main():
     macVictimLAN = devicesListLAN[0]['mac']
     ipServerLAN = devicesListLAN[1]['ip']
     macServerLAN = devicesListLAN[1]['mac']
-
+    print(interfaceNAT)
+    print(interfaceLAN)
 
     print("Please choose an attack:")
     print("A. ARP Poisoning")
@@ -109,8 +110,8 @@ if __name__ == "__main__":
 
 
 '''
-    print(interfaceNAT)
-    print(interfaceLAN)
+    print(interfaceNAT) # enp0s8
+    print(interfaceLAN) # enp0s3
     print("#######################################")
     # print(recon.scan_network(interfaceNAT))
     print("Target IP LAN(M1): {}".format(ipVictimLAN))
@@ -126,9 +127,22 @@ if __name__ == "__main__":
     print("Attacker IP (M3) NAT: {}".format(ipAttackerNAT))    
     print("Attacker MAC (M3) NAT: {}".format(macAttackerNAT))
     print("#######################################\n\n\n")
+
+
+use tcpdump to filter traffic by port and host:
+
+sudo tcpdump -i enp0s8 -n port 80
+sudo tcpdump -i enp0s8 -n host 10.0.2.9
+sudo tcpdump -i enp0s8 -n port 80 and host 10.0.2.9
+
+
 '''
 
 # ps aux | grep python
 # kill -9 <pid>
 # sudo iptables --flush
 # sudo iptables -t nat --flush
+
+
+
+
