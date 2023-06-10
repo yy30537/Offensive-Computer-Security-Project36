@@ -4,7 +4,7 @@ from scapy.all import ARP, Ether, srp
 import scapy.all as scapy
 import netifaces as ni
 
-interface = 'enp0s3'
+interface = 'enp0s8'
 def list_interfaces():
     interfaces = ni.interfaces()
     return interfaces
@@ -45,3 +45,25 @@ def scan_network(interface, interval=[1,10]):
                 device = {'ip': received[ARP].psrc, 'mac': received[ARP].hwsrc}
                 devices_list.append(device)
     return devices_list
+
+def passive_scan_network(interface):
+    print("passive scan")
+    print("create csv file")
+    file = open("network_listen.csv", "w")
+    header = "ip,mac\n"
+    file.write(header)
+    print("listening")
+    pkg_arp = sniff(filter="arp", count=1, iface=interface)
+    ipSource = pkg_arp[0][ARP].psrc
+    macSource = pkg_arp[0][ARP].hwsrc
+    if pkg_arp[0][ARP].op == 2:
+        print("ARP Reply")
+    elif pkg_arp[0][ARP].op == 1:
+        print("ARP Request")    
+    file.write(ipSource + "," + macSource + "\n")
+    file.close()
+
+passive_scan_network(interface)
+
+    
+
