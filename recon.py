@@ -45,6 +45,12 @@ def scan_network(interface, interval=[1,10]):
             if (received.haslayer(ARP)):
                 device = {'ip': received[ARP].psrc, 'mac': received[ARP].hwsrc}
                 devices_list.append(device)
+        #store in csv file
+        #overwrite file
+        file = open("scan_active.csv", "w")
+        for device in devices_list:
+            file.write(device['ip'] + "," + device['mac'] + "\n")
+        file.close()
     return devices_list
 
 def csv_to_dict(file_name):
@@ -90,6 +96,8 @@ def passive_scan_network(interface):
 
 #while True:
     #passive_scan_network(interface)
+
+scan_network(interface)
 
     
 
