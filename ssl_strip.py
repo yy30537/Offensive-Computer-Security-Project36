@@ -59,9 +59,7 @@ def process_packet(packet):
     if is_tls_client_hello(packet):
         print("[+] TLS ClientHello detected...")
         # Here you would implement the logic to modify the ClientHello message
-        # and send it to the server. This is a complex task that requires a
-        # deep understanding of the TLS protocol and is beyond the scope of this
-        # assistant.
+        # and send it to the server. 
 
 # modified to call intercept_packet
 def intercept_packet(packet):
@@ -132,12 +130,3 @@ def start():
 if __name__ == "__main__":
     start()
 
-'''
-Clone the repository:
-git clone https://github.com/tintinweb/scapy-ssl_tls.git
-cd scapy-ssl_tls
-python setup.py install
-
-
-
-'''
