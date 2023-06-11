@@ -6,26 +6,20 @@ import re
 from twisted.web import http
 
 
-# Dictionary to keep track of TCP connections and SSL contexts
+##############################################
+#
+# setting up a proxy server using Twisted 
+#
+##############################################
+
+# Dictionary to track TCP and SSL connections 
 tcp_connections = {}
 ssl_contexts = {}
 
-def is_tls_client_hello(packet):
-    # The first byte of the TLS record should be 0x16 (Handshake)
-    if packet[Raw].load[0] != '\x16':
-        return False
-
-    # The next two bytes are the TLS version (should be 0x0301, 0x0302, 0x0303 for TLS 1.0, 1.1, 1.2)
-    if packet[Raw].load[1:3] not in ['\x03\x01', '\x03\x02', '\x03\x03']:
-        return False
-
-    # The next byte (the 6th byte of the record) should be 0x01 (ClientHello)
-    if packet[Raw].load[5] != '\x01':
-        return False
-
-    return True
-
-# Your existing ProxyRequestHandler class
+# TODO: 
+# called when a request is received
+# It reads the request content, modifies it (replacing 'https://' with 'http://'),
+# and then writes the modified content back to the response.
 class ProxyRequestHandler(http.Request):
     def process(self):
         self.content.seek(0, 0)
@@ -41,25 +35,34 @@ class ProxyRequestHandler(http.Request):
         self.write(requestContent)
         self.finish()
 
+# TODO: 
+# called when a response is received
 class Proxy(http.HTTPChannel):
     requestFactory = ProxyRequestHandler
 
+# TODO: 
+# called when a connection is made
 class ProxyFactory(http.HTTPFactory):
     protocol = Proxy
 
+# TODO: 
+# starts the Twisted reactor, which is the event loop that drives the server. 
+# Creates an instance of ProxyFactory and tells the reactor to listen for incoming TCP connections on port 10000.
 def start_proxy():
     from twisted.internet import reactor
     factory = ProxyFactory()
     reactor.listenTCP(10000, factory)
     reactor.run()
 
-# The intercept_packet function
+
+# TODO: check if packet is a TLS packet
+def is_tls_client_hello(packet):
+    
+    return True
+
+# TODO: 
 def process_packet(packet):
-    # Check if packet is a ClientHello message
-    if is_tls_client_hello(packet):
-        print("[+] TLS ClientHello detected...")
-        # Here you would implement the logic to modify the ClientHello message
-        # and send it to the server. 
+    return packet
 
 # modified to call intercept_packet
 def intercept_packet(packet):
@@ -83,28 +86,29 @@ def intercept_packet(packet):
                 packet.set_payload(bytes(scapy_packet))
         elif scapy_packet[TCP].dport == 443:
             print("[+] HTTPS Request...")
-            if scapy_packet.haslayer(Raw):
-                process_packet(scapy_packet)
+            #process_packet(scapy_packet)
+            # TODO: 
 
     # Check if the packet is a response
-    if scapy_packet[TCP].sport == 80 and scapy_packet.haslayer(Raw):
+    if scapy_packet[TCP].sport == 80:
         print("[+] HTTP Response...")
-        load = scapy_packet[Raw].load.decode()
+        if scapy_packet.haslayer(Raw):
+            load = scapy_packet[Raw].load.decode()
 
-        # Modify the response as necessary
-        load = re.sub('<html><body><h1>It works!</h1></body></html>', \
-                        '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
-            
-        scapy_packet[Raw].load = load.encode()
-        del scapy_packet[IP].len
-        del scapy_packet[IP].chksum
-        del scapy_packet[TCP].chksum
-        packet.set_payload(bytes(scapy_packet))
+            # Modify the response as necessary
+            load = re.sub('<html><body><h1>It works!</h1></body></html>', \
+                            '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
+                
+            scapy_packet[Raw].load = load.encode()
+            del scapy_packet[IP].len
+            del scapy_packet[IP].chksum
+            del scapy_packet[TCP].chksum
+            packet.set_payload(bytes(scapy_packet))
 
     # Accept packet
     packet.accept()
 
-
+    
 def start():
     # Enable IP forwarding
     os.system("echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward")
@@ -114,7 +118,7 @@ def start():
 
     # Set up packet queue
     queue = NetfilterQueue()
-    queue.bind(0, process_packet)
+    queue.bind(0, intercept_packet)
 
     try:
         print("[+] Starting packet interception...")
@@ -129,4 +133,3 @@ def start():
 
 if __name__ == "__main__":
     start()
-
