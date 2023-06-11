@@ -14,27 +14,49 @@ def main():
     print("Hold on, Scanning Network...")
     interfaces = recon.list_interfaces()
 
-    interfaceLAN = interfaces[1]
-    interfaceNAT = interfaces[2]
+    try:
+        interfaceLAN = interfaces[1]
+        interfaceNAT = interfaces[2]
 
-    ipAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['ipAttacker']
-    macAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['macAttacker']
+        ipAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['ipAttacker']
+        macAttackerLAN = recon.get_own_ip_mac_adress(interfaceLAN)['macAttacker']
 
-    ipAttackerNAT = recon.get_own_ip_mac_adress(interfaceNAT)['ipAttacker']
-    macAttackerNAT = recon.get_own_ip_mac_adress(interfaceNAT)['macAttacker']
+        ipAttackerNAT = recon.get_own_ip_mac_adress(interfaceNAT)['ipAttacker']
+        macAttackerNAT = recon.get_own_ip_mac_adress(interfaceNAT)['macAttacker']
 
-    ipGateway = recon.get_gateway()['ipGateway']
-    macGateway = recon.get_gateway()['macGateway']
+        ipGateway = recon.get_gateway()['ipGateway']
+        macGateway = recon.get_gateway()['macGateway']
 
-    devicesListNAT = recon.scan_network(interfaceNAT)
-    ipVictimNAT = devicesListNAT[3]['ip']
-    macVictimNAT = devicesListNAT[3]['mac']
+        devicesListNAT = recon.scan_network(interfaceNAT)
+        ipVictimNAT = devicesListNAT[3]['ip']
+        macVictimNAT = devicesListNAT[3]['mac']
 
-    devicesListLAN = recon.scan_network(interfaceLAN)
-    ipVictimLAN = devicesListLAN[0]['ip']
-    macVictimLAN = devicesListLAN[0]['mac']
-    ipServerLAN = devicesListLAN[1]['ip']
-    macServerLAN = devicesListLAN[1]['mac']
+        devicesListLAN = recon.scan_network(interfaceLAN)
+        ipVictimLAN = devicesListLAN[0]['ip']
+        macVictimLAN = devicesListLAN[0]['mac']
+        ipServerLAN = devicesListLAN[1]['ip']
+        macServerLAN = devicesListLAN[1]['mac']
+    except IndexError:
+        ipAttackerLAN = ""
+        macAttackerLAN = ""
+
+        ipAttackerNAT = ""
+        macAttackerNAT = ""
+
+        ipGateway = ""
+        macGateway = ""
+
+        devicesListNAT = ""
+        ipVictimNAT = ""
+        macVictimNAT = ""
+
+        devicesListLAN = ""
+        ipVictimLAN = ""
+        macVictimLAN = ""
+        ipServerLAN = ""
+        macServerLAN = ""
+        print("No other devices found to scan, insert manually or add devices to network")
+        pass
 
     win = tk.Tk()
     win.geometry("800x600")
@@ -276,6 +298,27 @@ def main():
     changeMenu.add_command(label="Change Spoof Address", command=changeSpoof)
     changeMenu.add_command(label="View Device List", command=showList)
     menu.add_cascade(label="Change Details", menu=changeMenu)
+
+
+    def listenLAN():
+        popup = tk.Toplevel(win)
+        popup.geometry("200x200")
+        popup.title("Devices")
+        popup.resizable(False, False) 
+        tk.Label(popup, text="Listening...").pack()
+        recon.passive_scan_network(interfaceLAN)
+    def listenNAT():
+        popup = tk.Toplevel(win)
+        popup.geometry("200x200")
+        popup.title("Devices")
+        popup.resizable(False, False) 
+        tk.Label(popup, text="Listening...").pack()
+        recon.passive_scan_network(interfaceNAT)
+
+    passiveRecon = tk.Menu(menu)
+    passiveRecon.add_command(label="Listen/Download device list (LAN)", command=listenLAN)
+    passiveRecon.add_command(label="Listen/Download device list (NAT)", command=listenNAT)
+    menu.add_cascade(label="Passive Recon", menu=passiveRecon)
         
 
     def dns():
