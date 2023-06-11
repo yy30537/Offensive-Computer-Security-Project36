@@ -109,8 +109,8 @@ def process_packet(packet):
 
             elif 'http://' in load:
                 print("[+] HTTP ...")
-
-                # Don't do anything
+  
+                # Don't do anything?
 
                 scapy_packet[Raw].load = load.encode()
                 del scapy_packet[IP].len
