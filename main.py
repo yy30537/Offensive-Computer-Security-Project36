@@ -84,7 +84,7 @@ def main():
         entryMAC.pack()
 
 
-        tk.Label(win, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
+        tk.Label(popup, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
         button = tk.Button(popup, text="Change", command=changeIP)
         button.pack(pady=10)
 
@@ -110,7 +110,7 @@ def main():
         entryMAC.pack()
 
 
-        tk.Label(win, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
+        tk.Label(popup, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
         button = tk.Button(popup, text="Change", command=changeIP)
         button.pack(pady=10)
 
@@ -136,7 +136,7 @@ def main():
         entryMAC.pack()
 
 
-        tk.Label(win, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
+        tk.Label(popup, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
         button = tk.Button(popup, text="Change", command=changeIP)
         button.pack(pady=10)
     
@@ -162,7 +162,7 @@ def main():
         entryMAC.pack()
 
 
-        tk.Label(win, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
+        tk.Label(popup, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
         button = tk.Button(popup, text="Change", command=changeIP)
         button.pack(pady=10)
 
@@ -188,8 +188,8 @@ def main():
         entryMAC.pack()
 
 
-        tk.Label(win, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
-        tk.Label(win, text="Not recommended to change this").pack()
+        tk.Label(popup, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
+        tk.Label(popup, text="Dont change! Recommended").pack()
         button = tk.Button(popup, text="Change", command=changeIP)
         button.pack(pady=10)
 
@@ -215,7 +215,7 @@ def main():
         entryMAC.pack()
 
 
-        tk.Label(win, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
+        tk.Label(popup, text="MAC format = ff:ff:ff:ff:ff:ff").pack()
         button = tk.Button(popup, text="Change", command=changeIP)
         button.pack(pady=10)
 
@@ -243,16 +243,23 @@ def main():
 
 
         addr = tk.StringVar()
+        ip = tk.StringVar()
 
         def changeIP():
             global address
+            global ipServerNAT
             address = addr.get()
+            ipServerNAT = ip.get()
             print(address)
+            print(ipServerNAT)
             popup.destroy()
 
         tk.Label(popup, text="Enter new address to spoof").pack()
         entryIP = tk.Entry(popup, textvariable=addr)
         entryIP.pack()
+
+        entryServer = tk.Entry(popup, textvariable=ip)
+        entryServer.pack()
 
         button = tk.Button(popup, text="Change", command=changeIP)
         button.pack(pady=10)
@@ -276,15 +283,16 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
         try:
             print("DNS Spoofing")
-            dns_spoof.dns_spoof(address)
+            dns_spoof.dns_spoof(address, ipServerNAT)
             print(address)
+            print(ipServerNAT)
         except NameError: 
             popup = tk.Toplevel(win)
-            popup.geometry("250x100")
+            popup.geometry("300x100")
             popup.title("Error")
             popup.resizable(False, False) 
 
-            tk.Label(popup, text="Please enter an address to spoof.").pack(pady=40)
+            tk.Label(popup, text="Please enter an address AND server to spoof.").pack(pady=40)
 
 
     def arpPoison():
