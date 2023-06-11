@@ -4,6 +4,8 @@ from netfilterqueue import NetfilterQueue
 
 def process_packet(packet):
     print("[+] Packet intercepted...")
+
+    
     # Accept packet
     packet.accept()
 
