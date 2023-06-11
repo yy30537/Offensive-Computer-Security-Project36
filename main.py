@@ -277,6 +277,7 @@ def main():
         try:
             print("DNS Spoofing")
             dns_spoof.dns_spoof(address)
+            print(address)
         except NameError: 
             popup = tk.Toplevel(win)
             popup.geometry("250x100")
