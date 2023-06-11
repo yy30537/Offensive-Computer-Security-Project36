@@ -86,12 +86,7 @@ def intercept_packet(packet):
         elif scapy_packet[TCP].dport == 443:
             print("[+] HTTPS Request...")
             if scapy_packet.haslayer(Raw):
-                if is_tls_client_hello(scapy_packet):
-                    print("[+] TLS ClientHello detected...")
-                    # Here you would implement the logic to modify the ClientHello message
-                    # and send it to the server. This is a complex task that requires a
-                    # deep understanding of the TLS protocol and is beyond the scope of this
-                    # assistant.
+                process_packet(scapy_packet)
 
     # Check if the packet is a response
     if scapy_packet[TCP].sport == 80 and scapy_packet.haslayer(Raw):
@@ -111,7 +106,7 @@ def intercept_packet(packet):
     # Accept packet
     packet.accept()
 
-    
+
 def start():
     # Enable IP forwarding
     os.system("echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward")
