@@ -1,18 +1,23 @@
+from scapy.all import * 
+import time
+import os
 from netfilterqueue import NetfilterQueue
-from scapy.all import IP
+from threading import Thread
 
 def process_packet(packet):
-    # Convert packet to a Scapy packet
-    scapy_packet = IP(packet.get_payload())
-    
-    # Print packet
-    print(scapy_packet.summary())
-    
+    print("[+] Packet intercepted...")
     # Accept packet
     packet.accept()
 
+
 def ssl_strip():
-    # Create and bind to NetfilterQueue
+    # Enable IP forwarding
+    os.system("echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward")
+    # Set up iptables rule
+    os.system("sudo iptables -I FORWARD -j NFQUEUE --queue-num 0")
+
+
+    # Set up packet queue
     queue = NetfilterQueue()
     queue.bind(0, process_packet)
 
@@ -26,7 +31,3 @@ def ssl_strip():
 if __name__ == "__main__":
     ssl_strip()
 
-'''
-todo:
-now the ssl_strip.py is not working, it is not able to redirect the traffic to port 10000
-'''
