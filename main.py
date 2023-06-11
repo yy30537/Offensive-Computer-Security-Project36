@@ -7,6 +7,7 @@ import sys
 import threading
 import ssl_strip
 import Tkinter as tk
+import time
 
 def main():
 
