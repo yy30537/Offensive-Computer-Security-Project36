@@ -1,8 +1,6 @@
 from scapy.all import * 
-import time
 import os
 from netfilterqueue import NetfilterQueue
-from threading import Thread
 
 def process_packet(packet):
     print("[+] Packet intercepted...")

