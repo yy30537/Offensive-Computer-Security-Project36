@@ -92,12 +92,6 @@ def passive_scan_network(interface):
     dictionary_to_csv(file_name, net_dict)
 
 
-#check if file exists
-
-#while True:
-    #passive_scan_network(interface)
-
-scan_network(interface)
 
     
 
